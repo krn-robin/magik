@@ -1,4 +1,4 @@
-;;; magik-mode.el --- Emacs major mode for Smallworld Magik files
+;;; magik-mode.el --- Emacs major mode for Smallworld Magik files  -*- lexical-binding: t; -*-
 
 ;; Package-Version: 0.3.1
 ;; Package-Requires: ((emacs "24.4") (compat "28.1"))
@@ -32,7 +32,8 @@
   (defvar ac-modes)
   (require 'magik-indent)
   (require 'magik-electric)
-  (require 'magik-pragma))
+  (require 'magik-pragma)
+  (require 'magik-utils))
 
 (require 'compat)
 (require 'imenu)
@@ -1520,8 +1521,9 @@ If PT is given, goto that char position."
   (back-to-indentation)
   (let
       ((col (current-column))
-       (str (gsub (buffer-substring-no-properties
-		   (point) (line-end-position)) "\"" "\" + %\" + \"")))
+       (str (string-replace  "\"" "\" + %\" + \""
+			     (buffer-substring-no-properties
+			      (point) (line-end-position)))))
     (beginning-of-line)
     (indent-to col)
     (insert "write(\""

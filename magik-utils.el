@@ -1,4 +1,4 @@
-;;; magik-utils.el --- programming utils for the Magik lisp.
+;;; magik-utils.el --- programming utils for the Magik lisp.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -33,18 +33,6 @@ use the DEFAULT value that had been passed in."
   :type 'boolean
   :group 'magik)
 
-(defvar magik-utils-original-process-environment (cl-copy-list process-environment)
-  "Store the original `process-environment' at startup.
-This is used by \\[gis-version-reset-emacs-environment] to reset an
-Emacs session back to the original startup settings.
-Note that any user defined Environment variables set via \\[setenv]
-will be lost.")
-
-(defvar magik-utils-original-exec-path (cl-copy-list exec-path)
-  "Store the original `exec-path' at startup.
-This is used by \\[gis-version-reset-emacs-environment] to reset an
-Emacs session back to the original startup settings.")
-
 (defun barf-if-no-gis (&optional buffer process)
   "Return process object of GIS process.
 Signal an error if no gis is running."
@@ -52,51 +40,6 @@ Signal an error if no gis is running."
 	process (or process (get-buffer-process buffer)))
   (or process
       (error "There is no GIS process running in buffer '%s'" buffer)))
-
-(defun gsub (str from to)
-  "return a string with any matches for the regexp, `from', replaced by `to'."
-  (save-match-data
-    (prog1
-        (if (string-match from str)
-            (concat (substring str 0 (match-beginning 0))
-                    to
-                    (gsub (substring str (match-end 0)) from to))
-          str))))
-
-(defun sub (str from to)
-  "return a string with the first match for the regexp, `from', replaced by `to'."
-  (save-match-data
-    (prog1
-        (if (string-match from str)
-            (concat (substring str 0 (match-beginning 0))
-                    to
-                    (substring str (match-end 0)))
-          str))))
-
-(defun global-replace-regexp (regexp to-string)
-  "Replace REGEXP with TO-STRING globally"
-  (save-match-data
-    (goto-char (point-min))
-    (while
-	(re-search-forward regexp nil t)
-      (replace-match to-string nil nil))))
-
-(defun magik-utils-find-files-up (path file &optional first)
-  "Return list of FILEs found by looking up the directory PATH.
-FILE may even be a relative path!
-If FIRST is true just return the first one found."
-  (let ((dir (file-name-as-directory path))
-	parent
-	dirs)
-    (while dir
-      (if (file-exists-p (concat dir file))
-	  (setq dirs (cons (concat dir file) dirs)))
-      (setq parent (file-name-directory (directory-file-name dir))
-	    dir    (cond ((and first dirs) nil)
-			 ((equal parent dir) nil)
-			 ((equal parent "//") nil) ;; protect against UNC paths
-			 (t parent))))
-    dirs))
 
 (defun magik-utils-curr-word ()
   "return the word (or part-word) before point as a string."

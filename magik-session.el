@@ -1,4 +1,4 @@
-;;; magik-session.el --- mode for running a Smallworld Magik interactive process
+;;; magik-session.el --- mode for running a Smallworld Magik interactive process    -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -785,9 +785,7 @@ there is not, prompt for a command to run, and then run it."
 					     "Enter Magik process buffer:"
 					     (or magik-session-buffer magik-session-buffer-default-name)
 					     'magik-session-buffer-alist-prefix-function
-					     (generate-new-buffer-name magik-session-buffer-default-name)))
-	(rev-1920-regexp " +\\[rev\\(19\\|20\\)\\] +")
-	(alias-subst-regexp "\\\\!\\(\\\\\\)?\\*"))
+					     (generate-new-buffer-name magik-session-buffer-default-name))))
     (if (and (get-buffer-process buffer)
 	     (eq (process-status (get-buffer-process buffer)) 'run))
 	(progn
@@ -808,7 +806,6 @@ there is not, prompt for a command to run, and then run it."
 
 	(while keepgoing
 	  (setq keepgoing nil)
-	  (setq magik-session-command (sub magik-session-command rev-1920-regexp " "))
 	  (or (eq (string-match "\\[" magik-session-command) 0)
 	      (setq magik-session-command (concat "[" default-directory "] " magik-session-command)))
 	  (or command
@@ -816,10 +813,6 @@ there is not, prompt for a command to run, and then run it."
 		    (read-string "Magik command: "
 				 (car command-history)
 				 'command-history)))
-	  (if (string-match rev-1920-regexp magik-session-command)
-	      (progn
-		(setq keepgoing t)
-		(setq magik-session-command (sub magik-session-command rev-1920-regexp " "))))
 	  (or (eq (string-match "\\[" magik-session-command) 0)
 	      (setq magik-session-command (concat "[" default-directory "] " magik-session-command)))
 	  (string-match "\\[\\([^\]]*\\)\\] *\\([^ ]*\\) *\\(.*\\)" magik-session-command)
@@ -840,9 +833,6 @@ there is not, prompt for a command to run, and then run it."
 		      (re-search-backward "['\"]"))
 		  (end-of-line))
 		(setq alias-expansion (buffer-substring alias-beg (point)))
-		(or (string-match alias-subst-regexp alias-expansion)
-		    (setq alias-expansion (concat alias-expansion " \\!*")))
-		(setq alias-expansion (sub alias-expansion alias-subst-regexp args))
 		(setq magik-session-command (concat "[" dir "] " alias-expansion)))))
 
 	(kill-buffer alias-buffer))
