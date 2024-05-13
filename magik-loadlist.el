@@ -86,7 +86,6 @@ You can customise magik-loadlist-mode with the magik-loadlist-mode-hook.
   (make-local-variable 'font-lock-defaults)
 
   (use-local-map magik-loadlist-mode-map)
-  (easy-menu-add magik-loadlist-menu)
   (set-syntax-table magik-loadlist-mode-syntax-table)
 
   (setq major-mode 'magik-loadlist-mode

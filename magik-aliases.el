@@ -20,8 +20,10 @@
 ;;; Code:
 
 (eval-when-compile
-  (defvar msb-menu-cond)
-  (require 'magik-utils))
+  (defvar msb-menu-cond))
+
+(require 'magik-session)
+(require 'magik-utils)
 
 (defgroup magik-aliases nil
   "Customise Magik aliases files group."
@@ -342,8 +344,9 @@ With a prefix arg, ask user for current directory to use."
 	    magik-session-exec-path (cl-copy-list (or exec-path-aliases exec-path))
 	    magik-session-process-environment (cl-copy-list (or process-environment-aliases process-environment))
 	    magik-session-current-command (mapconcat 'identity args " "))
-      (if (stringp version)
-	  (set 'magik-version-current version))
+      (and (stringp version)
+	   (boundp 'magik-version-current)
+	   (set 'magik-version-current version))
 
       (insert (format "\nCwd is: %s\n\n" default-directory))
       (magik-session-start-process args))

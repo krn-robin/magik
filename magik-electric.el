@@ -107,11 +107,7 @@
   (setq magik-electric-mode
 	(if (null arg)
 	    (not magik-electric-mode)
-	  (> (prefix-numeric-value arg) 0)))
-  (message (if magik-electric-mode
-               "Electric Magik on"
-             "Electric Magik off")))
-(defalias 'magik-electric-toggle 'magik-electric-mode) ;compatibility
+	  (> (prefix-numeric-value arg) 0))))
 
 (defun magik-electric-hash (arg)
   "insert the char, `#', and if this is the first `#' on the line and

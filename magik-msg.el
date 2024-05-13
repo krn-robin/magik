@@ -100,7 +100,7 @@
 (defun magik-msg-customize ()
   "Open Customization buffer for Msg Mode."
   (interactive)
-  (customize-group 'msg))
+  (customize-group 'magik-msg))
 
 (defun magik-msg-forward-message ()
   "Put point at beginning of line of next message."
@@ -149,7 +149,6 @@ You can customise msg-mode with the msg-mode-hook.
   (make-local-variable 'outline-regexp)
 
   (use-local-map magik-msg-mode-map)
-  (easy-menu-add magik-msg-menu)
   (set-syntax-table magik-msg-mode-syntax-table)
 
   (setq major-mode 'magik-msg-mode

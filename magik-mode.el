@@ -29,15 +29,15 @@
   (defvar msb-menu-cond)
   (defvar ac-sources)
   (defvar ac-prefix)
-  (defvar ac-modes)
-  (require 'magik-indent)
-  (require 'magik-electric)
-  (require 'magik-pragma)
-  (require 'magik-utils))
+  (defvar ac-modes))
 
 (require 'compat)
 (require 'imenu)
+(require 'magik-electric)
+(require 'magik-indent)
+(require 'magik-pragma)
 (require 'magik-template)
+(require 'magik-utils)
 
 (defgroup magik nil
   "Customise Magik Language group."
@@ -133,11 +133,7 @@ concrete implementations."
 				    magik-font-lock-keywords-4
 				    magik-font-lock-keywords-5)
 				   nil t
-				   ((?_ . "w"))
-				   magik-goto-code
-				   (font-lock-fontify-buffer-function   . magik-font-lock-fontify-buffer)
-				   (font-lock-fontify-region-function   . magik-font-lock-fontify-region)
-				   (font-lock-unfontify-buffer-function . magik-font-lock-unfontify-buffer))
+				   ((?_ . "w")))
 	      indent-line-function 'magik-indent-line))
 
 (defvar magik-menu nil
@@ -716,97 +712,6 @@ Use auto-complete mode \"g\" symbol convention to represent a global.")
       (if (and (derived-mode-p 'magik-base-mode)
 	       (looking-at "_else\\|_elif\\|_finally\\|_using\\|_with\\|_when\\|_protection\\|_end"))
 	  (magik-indent-command)))))
-
-;;Actually only used by the Magik-Patch minor mode but we need a hook here
-;;because a function must be referred to in font-lock-defaults.
-(defvar magik-goto-code-function 'point-min
-  "Function used to place point on the line immediately preceeding Magik code.")
-
-(defun magik-goto-code ()
-  "Goto start of code."
-  (funcall magik-goto-code-function))
-
-(defun magik-font-lock-fontify-buffer ()
-  (let ((verbose (if (numberp font-lock-verbose)
-		     (> (buffer-size) font-lock-verbose)
-		   font-lock-verbose))
-	(code-start (save-excursion (magik-goto-code))))
-    (with-temp-message
-	(when verbose
-	  (format "Fontifying %s..." (buffer-name)))
-      ;; Make sure we have the right `font-lock-keywords' etc.
-      (unless font-lock-mode
-	(font-lock-set-defaults))
-      ;; Make sure we fontify etc. in the whole buffer.
-      (save-restriction
-	(widen)
-	(condition-case nil
-	    (save-excursion
-	      (save-match-data
-		(font-lock-fontify-region code-start (point-max) verbose)
-		(font-lock-after-fontify-buffer)
-		(setq font-lock-fontified t)))
-	  ;; We don't restore the old fontification, so it's best to unfontify.
-	  (quit (font-lock-unfontify-buffer))))
-      ;; Make sure we undo `font-lock-keywords' etc.
-      (unless font-lock-mode
-	(font-lock-unset-defaults)))))
-
-(defun magik-font-lock-unfontify-buffer ()
-  "Make sure we unfontify etc.  in the whole buffer."
-  (save-restriction
-    (widen)
-    (font-lock-unfontify-region (save-excursion (magik-goto-code)) (point-max))
-    (font-lock-after-unfontify-buffer)
-    (setq font-lock-fontified nil)))
-
-(defun magik-font-lock-fontify-region (beg end loudly)
-  (let*
-      ((modified (buffer-modified-p))
-       (buffer-undo-list t)
-       (inhibit-read-only t)
-       (inhibit-point-motion-hooks t)
-       (inhibit-modification-hooks t)
-       deactivate-mark buffer-file-name buffer-file-truename
-       (old-syntax-table (syntax-table))
-       (code-start (save-excursion (magik-goto-code))))
-    (unwind-protect
-	(save-restriction
-	  (widen)
-	  ;; Use the fontification syntax table, if any.
-	  (when font-lock-syntax-table
-	    (set-syntax-table font-lock-syntax-table))
-	  ;; check to see if we should expand the beg/end area for
-	  ;; proper multiline matches
-	  (when (and (boundp 'font-lock-multiline)
-		     font-lock-multiline
-		     (> beg code-start)
-		     (get-text-property (1- beg) 'font-lock-multiline))
-	    ;; We are just after or in a multiline match.
-	    (setq beg (or (previous-single-property-change
-			   beg 'font-lock-multiline)
-			  code-start))
-	    (goto-char beg)
-	    (setq beg (line-beginning-position)))
-	  (when (and (boundp 'font-lock-multiline) font-lock-multiline)
-	    (setq end (or (text-property-any end (point-max)
-					     'font-lock-multiline nil)
-			  (point-max))))
-	  (goto-char end)
-	  (setq end (line-beginning-position 2))
-	  (if (and (>= end code-start) (< beg code-start))
-	      (setq beg code-start))
-	  (when (and (>= beg code-start)
-		     (>= end code-start))
-	    ;; Now do the fontification.
-	    (font-lock-unfontify-region beg end)
-	    (unless font-lock-keywords-only
-	      (font-lock-fontify-syntactically-region beg end loudly))
-	    (font-lock-fontify-keywords-region beg end loudly)))
-      ;; Clean up.
-      (set-syntax-table old-syntax-table))
-    (if (and (not modified) (buffer-modified-p))
-	(set-buffer-modified-p nil))))
 
 (defun magik-toggle-transmit-debug-p (&optional arg)
   "Toggle transmission of #DEBUG statements in Magik code.

@@ -88,7 +88,7 @@
 (defun magik-product-customize ()
   "Open Customization buffer for Product Mode."
   (interactive)
-  (customize-group 'product))
+  (customize-group 'magik-product))
 
 ;;;###autoload
 (defun magik-product-mode ()
@@ -104,7 +104,6 @@ You can customise Product Mode with the `product-mode-hook'.
   (make-local-variable 'font-lock-defaults)
 
   (use-local-map magik-product-mode-map)
-  (easy-menu-add magik-product-menu)
   (set-syntax-table magik-product-mode-syntax-table)
 
   (setq major-mode 'magik-product-mode

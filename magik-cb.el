@@ -82,6 +82,7 @@
 (eval-when-compile
   (defvar msb-menu-cond))
 
+(require 'magik-aliases)
 (require 'magik-mode)
 (require 'magik-session)
 (require 'magik-utils)
@@ -655,7 +656,6 @@ To view the help on these variables type C-h v [Return] [variable-name]
 					;(make-local-hook 'kill-buffer-hook) ;add-hook uses local option
 
   (use-local-map magik-cb-mode-map)
-  (easy-menu-add magik-cb-menu)
   (set-syntax-table magik-base-mode-syntax-table)
 
   (setq major-mode 'magik-cb-mode
@@ -1045,7 +1045,7 @@ in \"*cb2*\" and note that \"*cb2*\" is now in family mode.
     (insert-file-contents (magik-cb-temp-file-name p) nil nil nil t)
     (if (search-forward "\C-l" nil t)
 	(progn
-	  (backward-delete-char 1)
+	  (delete-char -1)
 	  (insert "\n\n\n")))
     (goto-char (point-min))
     (if (re-search-forward "^[^ ]" nil t)
@@ -1416,7 +1416,7 @@ Don't ask for a response, though."
 	  (goto-char (point-min))
 	  (search-forward (concat " " str " "))
 	  (backward-char (+ 2 (length str)))
-	  (backward-delete-char 1)
+	  (delete-char -1)
 	  (insert
 	   (cond ((and term-p on-p)       "*")
 		 ((and term-p (not on-p)) ".")
@@ -1708,13 +1708,13 @@ some state for a clean exit."
       (if (eq magik-cb-cursor-pos 'method-name)
 	  (progn
 	    (magik-cb-set-buffer-m)
-	    (backward-delete-char arg killflag))
+	    (delete-char (- arg) killflag))
 	(magik-cb-set-buffer-c)
 	(if (bobp)
 	    (progn (magik-cb-set-buffer-m)
 		   (goto-char (point-max))
-		   (backward-delete-char arg killflag))
-	  (backward-delete-char arg killflag))))
+		   (delete-char (- arg) killflag))
+	  (delete-char (- arg) killflag))))
     (magik-cb-send-modeline-and-pr)))
 
 (defun magik-cb-delete-char (arg &optional killflag)

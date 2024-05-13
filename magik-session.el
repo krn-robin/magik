@@ -87,7 +87,7 @@
 (require 'magik-electric)
 (require 'magik-indent)
 (require 'magik-pragma)
-(or (boundp 'ac-sources) (setq ac-sources nil))
+(require 'magik-utils)
 
 (defcustom magik-session-buffer nil
   "*The default Smallworld session.
@@ -340,25 +340,10 @@ string for next time.")
 		  (repeat string)))
 (put 'magik-session-command-history 'permanent-local t)
 
-(defcustom magik-session-kill-process-function 'magik-utils-delete-process-safely
-  "*The function used to terminate a Magik PROCESS in the GIS buffer.
-
-`kill-process'   terminates the process but the process may tidy itself up
-		 before exiting and so Emacs will not display the terminated
-		 process message in the buffer until that is complete.
-
-`delete-process' terminates the process and Emacs immediately displays the
-		 process terminated message.
-
-`quit-process'   Sends SIGQUIT signal if the OS implements it.
-		 Not implemented on Windows OSes."
-  :group 'magik
-  :type  'function)
-
 (defun magik-session-customize ()
   "Open Customization buffer for Magik Session Mode."
   (interactive)
-  (customize-group 'gis))
+  (customize-group 'magik-session))
 
 (defun magik-session-prompt-update-font-lock ()
   "Update the Font-lock variable `magik-session-font-lock-keywords' with current `magik-session-prompt' setting."
@@ -863,14 +848,13 @@ there is not, prompt for a command to run, and then run it."
     (call-interactively 'gis)))
 
 (defun magik-session-kill-process ()
-  "Kill the current gis process.
-Uses `magik-session-kill-process-function' function to kill the process given in `magik-session-process'."
+  "Kill the current gis process."
   (interactive)
   (if (and magik-session-process
 	   (eq (process-status magik-session-process) 'run)
 	   (y-or-n-p "Kill the Magik process? "))
       (let ((status (process-status magik-session-process)))
-	(funcall magik-session-kill-process-function magik-session-process)
+	(kill-process magik-session-process)
 	(sit-for 0.1)
 	(if (eq status (process-status magik-session-process))
 	    (insert "\nMagik is still busy and will exit at an appropriate point. Please be patient... \n")))))
