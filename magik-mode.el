@@ -350,7 +350,7 @@ concrete implementations."
 
 (defface magik-method-face
   '((t (:inherit font-lock-function-name-face)))
-  "Font-lock Face to use when displaying method names and method and procedure keywords."
+  "Face to use to use for method names and method and procedure keywords."
   :group 'magik-faces)
 
 (defface magik-label-face
@@ -423,7 +423,7 @@ concrete implementations."
     ("def_slotted_exemplar" .
      "^[sw:]?def_slotted_exemplar(.*")
     )
-  "List of regexp strings which can be used for searching for a magik-specific string in a buffer.")
+  "Regexps to use for searching for finding a magik-specific string in a buffer.")
 
 (defvar magik-keyword-kleenean
   '("false" "true" "maybe")
@@ -562,13 +562,14 @@ See `magik-font-lock-keywords-1' and `magik-font-lock-keywords-2'."
     ))
   "Font lock setting for 4th level of Magik fontification.
 As 1st level but also fontifies all Magik keywords according their
-different classifications.  ie. loop keywords are fontified in the same face."
+different classifications."
   :group 'magik
   :type 'sexp)
 
 (defcustom magik-font-lock-keywords-5
   (append magik-font-lock-keywords-4 nil)
-  "Provides an easy user configurable level for personal/site fontification of styles.  Based from `magik-font-lock-keywords-4'."
+  "Provides an user configurable level for fontification of styles.
+Based from `magik-font-lock-keywords-4'."
   :group 'magik
   :type 'sexp)
 
@@ -756,7 +757,7 @@ Optional argument ARG .."
   "Insert a newline and indent.  (To insert a newline and not indent, use \\[electric-newline-and-maybe-indent])."
   (interactive "*")
   (if (eq major-mode 'magik-session-mode)
-      (error "Your magik shell buffer has got into magik mode!  To recover, type `M-x magik-session-mode'.  Please report this bug."))
+      (error "Your magik shell buffer has got into magik mode!  To recover, type `M-x magik-session-mode'"))
   (if abbrev-mode (save-excursion (expand-abbrev)))
   (if (save-excursion
 	(back-to-indentation)
@@ -795,11 +796,11 @@ Optional argument ARG .."
   "Return cons cell describing the method name parts (NAME . TYPE).
 For normal methods:
   NAME is the method name root
-  TYPE is '^<<' or '<<' or '()' or '()<<' or '()^<<' or empty string.
+  TYPE is `^<<' or `<<' or `()' or `()<<' or `()^<<' or empty string.
 
 For array methods
   NAME is nil
-  TYPE is '[]' or '[]<<' or '[]^<<' or '[,]' or '[,]<<' or '[,]^<<' etc."
+  TYPE is `[]' or `[]<<' or `[]^<<' or `[,]' or `[,]<<' or `[,]^<<' etc."
   (if (eq (elt name 0) ?\[)
       (cons nil name)
     (save-match-data
@@ -812,7 +813,7 @@ For array methods
 If more than one definition is found in the buffer, you will be
 given the opportunity to visit each definition.
 Also the search string is added to isearch mode's regexp ring so that
-you can use \\[isearch-forward-regexp] and use M-p to recall the search."
+you can use \\[isearch-forward-regexp] and use \\[isearch-ring-retreat] to recall the search."
   (interactive
    (list
     (read-string "Method Name: " (current-word))
@@ -992,8 +993,8 @@ If the last command was \\[magik-mark-method] then that region will be copied in
 	 x)))
 
 (defun magik-function (cmd &rest args)
-  "This function generates magik code from the supplied arguments.
-e.g. (magik-function \"system.test\" \"file\" 'unset 4) returns the string
+  "Generate magik code from the supplied arguments.
+e.g. (magik-function \"system.test\" \"file\" \\='unset 4) returns the string
      system.test(\\\"file\\\", _unset, 4)
 Argument CMD ...
 Optional argument ARGS ..."
