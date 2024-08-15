@@ -84,7 +84,9 @@ usage={})") ("_iter _method " prev_class_name) "\t## " "\t## " -
       ("def_slotted_exemplar(" filename_as_symbol ",\n\t## \n\t## \n\t## \n\t{\n\t},\n\t{})\n" dollar))
      ("remex" e 2 ("remex(" filename_as_symbol ")\n" dollar))
      ("message_handler" e 0 ("message_handler.new(" filename_as_symbol ")\n" dollar))
-
+     ("construct" e 16 (prev_pragma "_pragma(classify_level=, topic={}, usage={})")
+      ("_method " prev_class_name"new()") "\t## " "\t## " "\t>> _clone.init()" "_endmethod" dollar -
+      (prev_pragma "_pragma(classify_level=, topic={}, usage={})") ("_method " prev_class_name "init()") "\t## " "\t## " slots  "\t>> _self" "_endmethod" dollar)
      ("if" e 0 "_if " "_then" - "_endif")
      ("over" e 0 "_over " "_loop" - "_endloop")
      ("catch" e 1 "_catch" - "_endcatch")
@@ -274,6 +276,31 @@ the previous line starts with a `#' align with that."
      ((eq line 'dollar)
       (delete-region (line-beginning-position) (point))
       (insert "$\n"))
+     ((eq line 'slots)
+      (let ((slot_count 1)
+        (slot_name nil)
+        (slotted_loc nil)
+        (dollar_loc nil)
+        (more_slots t))
+	(save-excursion
+	  (when (re-search-backward "\\(def_slotted_exemplar\\)" nil t)
+	    (setq slotted_loc (match-beginning 0))
+            (goto-char slotted_loc)
+            (when (re-search-forward "\\(\\$\\)" nil t)
+              (setq dollar_loc (match-beginning 0)))))
+	(while more_slots
+	  (save-excursion
+	    (goto-char slotted_loc)
+	    (if (re-search-forward "{\\s-*:\\s-*\\(\\sw+\\)\\s-*,\\s-*\\(_unset\\)\\s-*}" dollar_loc t slot_count)
+		(progn
+		  (setq slot_count (1+ slot_count))
+		  (setq slot_name  (match-string 1)))
+	      (setq more_slots nil)))
+	  (if more_slots
+	      (if (= slot_count 2)
+		  (insert "\t." slot_name " <<")
+		(insert "\n\t." slot_name " <<")
+		)))))
      ((eq line 'prev_class_name)
       (let (class)
 	(save-excursion
