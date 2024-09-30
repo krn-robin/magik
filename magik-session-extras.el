@@ -1,4 +1,4 @@
-;;; magik-session-extras.el --- Optional additions to the magik-session-mode
+;;; magik-session-extras.el --- Optional additions to the magik-session-mode  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
 ;; Adds additional functionality to magik-session-mode.
 ;; It currently adds the functionality to jump immediately from a traceback call stack line to the method definition on the prompt.
 ;; It will highlight the call stack lines and the output lines from methods such as .apropos and print_local_methods().
-;; It uses the magik-cb-process in the background. So the magik-cb-process has to be started at least once.
+;; It uses the magik-cb-process in the background.  So the magik-cb-process has to be started at least once.
 ;;
 ;; Usage:
 ;; via use-package: (use-package magik-session-extras :after magik-mode :hook magik-session-mode)
-;; without use-package: (require 'magik-session-extras) (add-hook 'magik-session-mode-hook 'magik-session-extras)
+;; without use-package: (require 'magik-session-extras) (add-hook 'magik-session-mode-hook #'magik-session-extras)
 
 ;;; Code:
 
@@ -49,8 +49,7 @@
   "Activate the additional functionality for the `magik-session-mode'."
   (setq magik-session-font-lock-keywords (append magik-session-font-lock-keywords
                                                  magik-session-extras-font-lock-keywords))
-  (advice-add 'magik-session-newline :around #'magik-session-extras-newline)
-  )
+  (advice-add 'magik-session-newline :around #'magik-session-extras-newline))
 
 (defun magik-session-extras--deactivate ()
   "Deactivates the additional functionality for the `magik-session-mode'."
@@ -58,9 +57,7 @@
     (dolist (keyword magik-session-extras-font-lock-keywords font-lock-keywords)
       (setq font-lock-keywords (remove keyword font-lock-keywords)))
     (setq magik-session-font-lock-keywords font-lock-keywords)
-    (advice-remove 'magik-session-newline #'magik-session-extras-newline)
-    )
-  )
+    (advice-remove 'magik-session-newline #'magik-session-extras-newline)))
 
 (define-minor-mode magik-session-extras
   "Optional additions to the `magik-session-mode'."
@@ -68,8 +65,7 @@
   (when (bound-and-true-p magik-session-extras)
     (magik-session-extras--activate))
   (when (not (bound-and-true-p magik-session-extras))
-    (magik-session-extras--deactivate))
-  )
+    (magik-session-extras--deactivate)))
 
 (defun magik-session-extras-newline (fn &rest args)
   "Jump to method definition based on the face of the text.
@@ -78,15 +74,13 @@ Or as fallback the normal newline behaviour."
          (magik-session-extras-cb-method-jump-traceback))
         ((eq (get-text-property (point) 'face) 'magik-session-method-definition-face)
          (magik-session-extras-cb-method-jump-method))
-        ((apply fn args)))
-  )
+        ((apply fn args))))
 
 (defun magik-session-extras-set-cb-process-var ()
   "Set the `magik-cb-process' variable. So that the callback to `magik-cb-send-string' will work."
   (unless magik-cb-process
     (setq magik-cb-process (magik-cb-process (get-buffer (concat "*cb*" (buffer-name (current-buffer))))))
-    (magik-cb-process))
-  )
+    (magik-cb-process)))
 
 (defun magik-session-extras-go-to-method-definition (method-name exemplar-name)
   (magik-transmit-string (concat "method_finder.emacs_go_to_method_definition(\"" method-name "\",\"" exemplar-name "\")" "\n")
@@ -94,9 +88,7 @@ Or as fallback the normal newline behaviour."
                            (beginning-of-line)
                            (magik-package-line))
                          (lambda (f) (magik-function "load_file" f 'unset (or (buffer-file-name) 'unset)))
-                         (lambda (f) (magik-function "system.unlink" f 'false 'true))
-                         )
-  )
+                         (lambda (f) (magik-function "system.unlink" f 'false 'true))))
 
 (defun magik-session-extras-cb-method-jump-traceback ()
   "Jumps to the method definition based on the `magik-session-traceback-call-stack-face'.
@@ -118,11 +110,8 @@ Using the `magik-cb-process' in the background."
                                   (buffer-substring-no-properties (point) start-of-file-point) " " t)))
       (setq method-and-exemplar (split-string method-and-exemplar "\\."))
       (setq method-name (cadr method-and-exemplar))
-      (setq exemplar-name (car method-and-exemplar))
-      )
-    (magik-session-extras-go-to-method-definition method-name exemplar-name)
-    )
-  )
+      (setq exemplar-name (car method-and-exemplar)))
+    (magik-session-extras-go-to-method-definition method-name exemplar-name)))
 
 (defun magik-session-extras-cb-method-jump-method ()
   "Jumps to the method definition based on the `magik-session-method-definition-face'.
@@ -147,25 +136,18 @@ Using the `magik-cb-process' in the background."
       (if (length> method-name 1)
           (if (string-match-p ")" (cadr method-name))
               (setq method-name (concat (car method-name) "()"))
-            (setq method-name (concat (car method-name) "<<"))
-            )
-        (setq method-name (car method-name))
-        )
-      )
-    (magik-session-extras-go-to-method-definition method-name exemplar-name)
-    )
-  )
+            (setq method-name (concat (car method-name) "<<")))
+        (setq method-name (car method-name))))
+    (magik-session-extras-go-to-method-definition method-name exemplar-name)))
 
 (defvar-local magik-session-extras-magik-code-loaded? nil
   "Shows if the `magik-session-extras-load-magik-code' is loaded in the current magik session.")
 
 (defun magik-session-extras-ensure-magik-code-loaded ()
   "Loads the `magik-session-extras-load-magik-code' in the current magik session."
-  (when (eq magik-session-extras-magik-code-loaded? nil)
+  (unless magik-session-extras-magik-code-loaded?
     (magik-session-extras-load-magik-code)
-    (setq magik-session-extras-magik-code-loaded? t)
-    )
-  )
+    (setq magik-session-extras-magik-code-loaded? t)))
 
 ;; Inline magik code
 
@@ -199,9 +181,7 @@ Using the `magik-cb-process' in the background."
      (beginning-of-line)
      (magik-package-line))
    (lambda (f) (magik-function "load_file" f 'unset (or (buffer-file-name) 'unset)))
-   (lambda (f) (magik-function "system.unlink" f 'false 'true))
-   )
-  )
+   (lambda (f) (magik-function "system.unlink" f 'false 'true))))
 
 (provide 'magik-session-extras)
 ;;; magik-session-extras.el ends here

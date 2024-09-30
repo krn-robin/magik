@@ -1,4 +1,4 @@
-;;; magik-template.el ---
+;;; magik-template.el ---  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@
 ;; Creating another template set
 ;; =============================
 ;; To create another template set you may need to write some function(s) that can distinguish
-;; between the templates. You will then add them to the beginning of magik-template-file-type-hook.
+;; between the templates.  You will then add them to the beginning of magik-template-file-type-hook.
 ;; You will also need to write a function that will return t when a new filename is created
 ;; that should use this template set.
 ;; For example, in magik-patch.el to create a template set called "Patch":
@@ -90,26 +90,25 @@
 (defvar magik-template-alist nil
   "Alist of types of template files.
 Each element is a cons cell:
-(TYPE . FILE)
+\(TYPE . FILE)
 When you add to this alist to enable additional templates,
 you will also have to add an appropriate entry to
 magik-template-file-type-alist to make the user
 selection pick up the new template file.")
 
-(defvar magik-template-file-type nil
+(defvar-local magik-template-file-type nil
   "Type of Magik file being edited.
-This variable is buffer local and is used to identify the type of magik file it is,
-i.e. which Template file it came from.
+This variable is buffer local and is used to identify the type of magik file
+it is, i.e. which Template file it came from.
 
 The default value of this variable is used for communicating the type of
-template the user wants when the buffer/file does not exist to the `file-not-found-hook'
-function \\[magik-template-maybe-insert].")
-(make-variable-buffer-local 'magik-template-file-type)
+template the user wants when the buffer/file does not exist to
+the `file-not-found-hook' function \\[magik-template-maybe-insert].")
 
 (defvar magik-template-file-type-templates-default '((default "Default" "template_default.magik"))
   "Default list for \\[magik-template-file-type-alist-add].
-The order is important since the first in the list is the default template used when
-the user presses [return] when asked to select a template.
+The order is important since the first in the list is the default template used
+when the user presses [return] when asked to select a template.
 If you want to change the order and hence the default used.")
 
 (defvar magik-template-file-type-default 'default
@@ -120,21 +119,22 @@ a key in magik-template-alist.")
 
 (defvar magik-template-file-type-alist nil
   "Alist of valid Magik file types.
-This is used to give the User a choice of template to use when they do C-x C-f
-with a Magik file name but when the file does not exist yet.
+This is used to give the User a choice of template to use when they
+do \\[find-file] with a Magik file name but when the file does not exist yet.
 
-(LABEL . (FUNCTION . ((OPTION . KEY) ... )))
+\(LABEL . (FUNCTION . ((OPTION . KEY) ... )))
 where
 LABEL    is the string label used in the prompt to the user.
-FUNCTION is a function used to test the type of templates to use for the new file
-         set to t for the default template options
+FUNCTION is a function used to test the type of templates to use for
+         the new file set to t for the default template options
 OPTION   is the string displayed for the user to select the KEY.
 KEY      is the type of template file to use as given in magik-template-alist.")
 
 (defun magik-template-file-type-alist-add (label function options &optional replace-or-append)
-  "Provide interface for adding new magik-template-file-type collections.
+  "Provide interface for adding new `magik-template-file-type' collections.
 A template file may be listed in multiple label groups.
-This function modifies both magik-template-file-type-alist and magik-template-alist.
+This FUNCTION modifies both `magik-template-file-type-alist'
+and `magik-template-alist'.
 
 Each OPTION is a list (SYMBOL LABEL FILE)
 
@@ -143,13 +143,12 @@ where SYMBOL is the list symbol representing this type,
       FILE   is the file name for this template found in magik-template-dir.
 
 The optional argument REPLACE-OR-APPEND is either nil, 'replace or 'append.
-If nil     then OPTIONS are prepended to the LABEL entry of magik-template-file-type-alist,
-   'append                  appended                                             ,
-   'replace             replace       any existing OPTIONS of the LABEL entry in
-            magik-template-file-type-alist."
+If nil then OPTIONS are prepended to the LABEL entry
+of `magik-template-file-type-alist', 'append appended, 'replace replace
+any existing OPTIONS of the LABEL entry in `magik-template-file-type-alist'."
 
   ;;Add each template file to the alist of template file names. Avoids duplication
-  (mapc #'(lambda (x) (add-to-list 'magik-template-alist (cons (elt x 0) (elt x 2)))) options)
+  (mapc (lambda (x) (add-to-list 'magik-template-alist (cons (elt x 0) (elt x 2)))) options)
 
   ;;Create main template key if not already there
   (or (assoc label magik-template-file-type-alist)
@@ -161,9 +160,9 @@ If nil     then OPTIONS are prepended to the LABEL entry of magik-template-file-
          (alist-entry (assoc label magik-template-file-type-alist))
          (choice-list (and (not replace-p)         ;;i.e set to nil if replace.
                            (cddr alist-entry))))
-    (mapc #'(lambda (x) (add-to-list 'choice-list
-                                     (cons (elt x 1) (elt x 0))
-                                     append-p))
+    (mapc (lambda (x) (add-to-list 'choice-list
+                                   (cons (elt x 1) (elt x 0))
+                                   append-p))
           (if append-p
               options
             ;;preserve user supplied order if prepending.
@@ -184,7 +183,7 @@ to use for magik-patch-file-type.")
 ;;Functions
 
 (defun magik-template-file (type &optional dir)
-  "Returns the path to the template of type TYPE. "
+  "Returns the path to the template of type TYPE in directory DIR."
   (let ((file (cdr (assoc type magik-template-alist)))
         (template-dir (or dir magik-template-dir)))
     (and file template-dir (concat (file-name-as-directory template-dir) file))))
@@ -199,12 +198,11 @@ to use for magik-patch-file-type.")
 (defun magik-template-initialise (type)
   "Inserts template text.
 Only the text in the template starting from a line matching ^# will be inserted."
-  (if type   ;; to strip out the preamble from the template.
-      (progn
+  (when type   ;; to strip out the preamble from the template.
         (goto-char (point-min))
         (or (re-search-forward "^#" nil t)
             (error "The template file, %s, doesn't seem to have column-1 hash, #, character" (magik-template-file type)))
-        (delete-region (point-min) (1- (point)))))
+        (delete-region (point-min) (1- (point))))
   (goto-char (point-max))
   (run-hooks 'magik-template-initialise-hook))
 
@@ -253,7 +251,8 @@ a template type to use for normal magik files.
                 (erase-buffer)
                 (insert-file-contents template-file)
                 (magik-template-initialise magik-template-file-type)))))))
-(add-hook 'find-file-not-found-hooks 'magik-template-maybe-insert)
+
+(add-hook 'find-file-not-found-hooks #'magik-template-maybe-insert)
 
 ;;Ideally this function would be a bit more intelligent so that it did not require
 ;; modification every time a new template was made and would also reduce the need for
@@ -270,7 +269,7 @@ This hook should come last."
   (if (re-search-forward "^_package " nil t)
       'default))
 
-(add-hook  'magik-template-file-type-hook 'magik-template-file-type-p t)
+(add-hook  'magik-template-file-type-hook #'magik-template-file-type-p t)
 
 ;;;;;;;;;;;;;;;;;;
 ;;Build template structure.

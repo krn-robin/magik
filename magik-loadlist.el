@@ -1,4 +1,4 @@
-;;; magik-loadlist.el --- mode for editing Magik load_list.txt files.
+;;; magik-loadlist.el --- mode for editing Magik load_list.txt files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -36,8 +36,7 @@ Initial ^ and final $ is automatically added in `loadlist-ignore'."
 (defcustom magik-loadlist-font-lock-keywords
   (list
    '("^.+\\([\\/]\\)" 0 font-lock-keyword-face)
-   '("^.+"            0 font-lock-variable-name-face)
-   )
+   '("^.+"            0 font-lock-variable-name-face))
   "Default fontification of load_list.txt files."
   :group 'magik-loadlist
   :type 'sexp)
@@ -209,7 +208,7 @@ With a prefix arg accept all changes without prompting."
       "$\n"))))
 
 (defun magik-loadlist-gis-drag-n-drop-load (gis filename)
-  "Interface to Drag 'n' Drop GIS mode.
+  "Interface to Drag \\='n Drop GIS mode.
 Called by `gis-drag-n-drop-load' when a load_list.txt file is dropped."
   (let ((process (barf-if-no-gis gis))
         (dir  (file-name-directory filename))
@@ -228,8 +227,7 @@ Called by `gis-drag-n-drop-load' when a load_list.txt file is dropped."
 
 ;;; Package registration
 ;;;###autoload
-(or (assoc "load_list\\.txt$" auto-mode-alist)
-    (push '("load_list\\.txt$" . magik-loadlist-mode) auto-mode-alist))
+(add-to-list 'auto-mode-alist '("load_list\\.txt\\'" . magik-loadlist-mode))
 
 (progn
   ;; ------------------------ magik loadlist mode  ------------------------

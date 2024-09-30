@@ -1,4 +1,4 @@
-;;; magik-module.el --- mode for editing Magik module.def files.
+;;; magik-module.el --- mode for editing Magik module.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -45,8 +45,7 @@
 ;; Imenu configuration
 (defvar magik-module-imenu-generic-expression
   '(
-    (nil "^\\(\\sw+\\)\\s-*\n\\(.\\|\n\\)*\nend\\s-*$" 1)
-    )
+    (nil "^\\(\\sw+\\)\\s-*\n\\(.\\|\n\\)*\nend\\s-*$" 1))
   "Imenu generic expression for Magik Message mode.  See `imenu-generic-expression'.")
 
 ;; Font-lock configuration
@@ -60,8 +59,7 @@
    '("^\\(\\sw+\\)\\s-*$" . font-lock-variable-name-face)
    '("^\\(\\sw+\\s-*\\sw*\\)\\s-*\\([0-9]*\\s-*[0-9]*\\)"
      (1 font-lock-function-name-face)
-     (2 font-lock-constant-face))
-   )
+     (2 font-lock-constant-face)))
   "Default fontification of module.def files."
   :group 'module
   :type 'sexp)
@@ -138,8 +136,7 @@ You can customize Module Mode with the `magik-module-mode-hook`.
 ;; Imenu configuration
 (defvar magik-module-imenu-generic-expression
   '(
-    (nil "^\\(\\sw+\\)\\s-*\n\\(.\\|\n\\)*\nend\\s-*$" 1)
-    )
+    (nil "^\\(\\sw+\\)\\s-*\n\\(.\\|\n\\)*\nend\\s-*$" 1))
   "Imenu generic expression for Magik Message mode.  See `imenu-generic-expression'.")
 
 ;; Font-lock configuration
@@ -153,16 +150,10 @@ You can customize Module Mode with the `magik-module-mode-hook`.
    '("^\\(\\sw+\\)\\s-*$" . font-lock-variable-name-face)
    '("^\\(\\sw+\\s-*\\sw*\\)\\s-*\\([0-9]*\\s-*[0-9]*\\)"
      (1 font-lock-function-name-face)
-     (2 font-lock-constant-face))
-   )
+     (2 font-lock-constant-face)))
   "Default fontification of module.def files."
   :group 'module
   :type 'sexp)
-
-(defun magik-module-customize ()
-  "Open Customization buffer for Module Mode."
-  (interactive)
-  (customize-group 'magik-module))
 
 (defun magik-module-toggle-save-magikc (arg)
   "Toggle saving of .magikc files when loading module."
@@ -312,8 +303,7 @@ Called by `gis-drag-n-drop-load' when a Module file is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(or (assoc "module\\.def$" auto-mode-alist)
-    (push '("module\\.def$" . magik-module-mode) auto-mode-alist))
+(add-to-list 'auto-mode-alist '("module\\.def\\'" . magik-module-mode))
 
 (defvar magik-module-f2-map (make-sparse-keymap)
   "Keymap for the F2 function key in Magik module.def buffers.")

@@ -77,8 +77,7 @@ The GIS process used is either that given by BUF or the variable `gis-buffer'."
 ;;; Package registration
 
 ;;;###autoload
-(or (assoc "\\.trn$" auto-mode-alist)
-    (push '("\\.trn$" . magik-trn-mode) auto-mode-alist))
+(add-to-list 'auto-mode-alist '("\\.trn\\'" . magik-trn-mode))
 
 ;; ------------------------ magik trn mode -------------------------
 (define-key magik-trn-mode-map (kbd "<f2> b") 'magik-trn-transmit-buffer)

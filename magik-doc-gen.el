@@ -92,8 +92,7 @@ then complete with Typedocs format format"
       (while (search-forward-regexp (cdr (assoc "def_slotted_exemplar" magik-regexp)) nil t)
         (save-excursion
           (magik-parse-exemplar-type-docs ))
-        (forward-line))
-      ))))
+        (forward-line))))))
 
 (defun magik-parse-exemplar-type-docs ()
   "Check exemplar for type-docs."
@@ -123,9 +122,7 @@ then complete with Typedocs format format"
       (when (and (not (equal slot "")) (not (member slot slots-in-comments)))
         (push slot missing-slots)))
 
-    (magik-write-exemplar-type-docs missing-slots starting-point comments-found )
-    )
-  )
+    (magik-write-exemplar-type-docs missing-slots starting-point comments-found )))
 
 (defun magik-write-exemplar-type-docs (missing-slots starting-point comments-found)
   "Writer function for inserting exmplar-type-docs.
@@ -143,8 +140,7 @@ Argument COMMENTS-FOUND ..."
       (progn
         (goto-line starting-point)
         (dolist (slot missing-slots)
-          (insert (concat "## @slot {:} " slot "\n")))))
-    ))
+          (insert (concat "## @slot {:} " slot "\n")))))))
 
 (defun magik-single-method-type-docs ()
   "Search for the closest method definition.
@@ -178,8 +174,7 @@ Then complete the comments if parameters are missing."
       (if (or (search-backward-regexp (cdr (assoc "def_slotted_exemplar" magik-regexp)) nil t)
               (search-forward-regexp (cdr (assoc "def_slotted_exemplar" magik-regexp)) nil t))
           (magik-parse-exemplar-type-docs)
-        (message "No exemplar found in the current buffer."))
-      )))
+        (message "No exemplar found in the current buffer.")))))
 
 (defun magik-parse-method-type-docs (method-string)
   "Helper function for inserting method-type-docs.
@@ -212,8 +207,7 @@ Argument METHOD-STRING ..."
         (push parameter missing-parameters)))
     (setq missing-parameters (reverse missing-parameters))
 
-    (magik-write-method-type-docs missing-parameters starting-point comments-found write-return (length parameters))
-    ))
+    (magik-write-method-type-docs missing-parameters starting-point comments-found write-return (length parameters))))
 
 (defun magik-write-method-type-docs (missing-parameters starting-point comments-found write-return parameters-count)
   "Writer function for inserting method type docs.
@@ -234,8 +228,7 @@ Argument WRITE-RETURN ..."
       (progn
         (goto-line (- starting-point 1))
         (dolist (parameter missing-parameters)
-          (insert (concat "\t## @param {:} " parameter "\n")))))
-    ))
+          (insert (concat "\t## @param {:} " parameter "\n")))))))
 
 (defun magik-parse-sw-method-docs (method-string)
   "Helper function for inserting sw-method-docs.

@@ -1,4 +1,4 @@
-;;; magik-aliases.el --- mode for editing GIS aliases files.   -*- lexical-binding: t; -*-
+;;; magik-aliases.el --- mode for editing GIS aliases files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,8 +20,10 @@
 ;;; Code:
 
 (eval-when-compile
-  (defvar msb-menu-cond)
-  (require 'magik-utils))
+  (defvar msb-menu-cond))
+
+(require 'magik-session)
+(require 'magik-utils)
 
 (require 'easymenu)
 (require 'compat)
@@ -89,13 +91,12 @@ If any function returns t, then the buffer is displayed."
   :type  'hook)
 
 (defvar magik-aliases-definition-regexp "^\\([^#]\\S-+\\):\\s-*$"
-  "Regexp matching an alias definition")
+  "Regexp matching an alias definition.")
 
 ;; Imenu configuration
 (defvar magik-aliases-imenu-generic-expression
   (list
-   (list nil magik-aliases-definition-regexp 1)
-   )
+   (list nil magik-aliases-definition-regexp 1))
   "Imenu generic expression for Aliases mode.  See `imenu-generic-expression'.")
 
 ;; Font-lock configuration
@@ -105,8 +106,7 @@ If any function returns t, then the buffer is displayed."
    '("^\\s-+\\([A-Z_]+\\)\\s-*:=" 1 font-lock-type-face)
    '("^\\s-+\\([A-Z_0-9]+\\)\\s-*=" 1 font-lock-variable-name-face)
    '("^\\s-+\\(\\sw+\\)\\s-*=" 1 font-lock-builtin-face)
-   '("\\s$\\sw+\\s$" . font-lock-constant-face)
-   )
+   '("\\s$\\sw+\\s$" . font-lock-constant-face))
   "Default fontification of Aliases buffers."
   :group 'magik-aliases
   :type 'sexp)
@@ -141,8 +141,8 @@ You can customise magik-aliases-mode with the magik-aliases-mode-hook.
                imenu-generic-expression magik-aliases-imenu-generic-expression
                font-lock-defaults '(magik-aliases-font-lock-keywords nil nil))
 
-  (add-hook 'menu-bar-update-hook 'magik-aliases-update-menu nil t)
-  (add-hook 'kill-buffer-hook 'magik-aliases-kill-buffer nil t))
+  (add-hook 'menu-bar-update-hook #'magik-aliases-update-menu nil t)
+  (add-hook 'kill-buffer-hook #'magik-aliases-kill-buffer nil t))
 
 (defvar magik-aliases-menu nil
   "Menu for Aliases mode.")
@@ -160,10 +160,9 @@ You can customise magik-aliases-mode with the magik-aliases-mode-hook.
 
 (defun magik-aliases-kill-buffer ()
   "Function to run when an Aliases mode buffer is run."
-  (if (eq major-mode 'magik-aliases-mode)
-      (progn
+  (when (derived-mode-p 'magik-aliases-mode)
         (setq major-mode 'fundamental-mode) ; prevent current buffer being listed.
-        (magik-aliases-update-sw-menu))))
+        (magik-aliases-update-sw-menu)))
 
 (defun magik-aliases-n ()
   "If buffer is read-only goto next alias, else insert SPC."
@@ -219,7 +218,7 @@ You can customise magik-aliases-mode with the magik-aliases-mode-hook.
   "Return t, to switch to the buffer that the GIS.exe process is running in.
 Since some entries in the aliases file do not start a Smallworld Magik GIS
 process we do not necessarily want to switch to the buffer running the
-process all the time. These are the following methods by which we control
+process all the time.  These are the following methods by which we control
 when the buffer is displayed:
   Hook: `aliases-switch-to-buffer-hooks'
        Each function in the hook is passed the name of the alias.
@@ -228,8 +227,7 @@ when the buffer is displayed:
        If the alias name matches the given regular expression the buffer
        is displayed.
   Variable: `aliases-switch-to-buffer'
-       If this is t then the buffer is displayed.
-"
+       If this is t then the buffer is displayed."
   (cond ((run-hook-with-args-until-success 'magik-aliases-switch-to-buffer-hooks alias)
          t)
         ((stringp magik-aliases-switch-to-buffer-regexp)
@@ -308,11 +306,12 @@ With a prefix arg, ask user for current directory to use."
       (setq default-directory dir
             args (append (list program) args))
       (compat-call setq-local
-            magik-session-exec-path (cl-copy-list (or exec-path-aliases exec-path))
-            magik-session-process-environment (cl-copy-list (or process-environment-aliases process-environment))
-            magik-session-current-command (mapconcat 'identity args " "))
-      (if (stringp version)
-          (set 'magik-version-current version))
+                   magik-session-exec-path (cl-copy-list (or exec-path-aliases exec-path))
+                   magik-session-process-environment (cl-copy-list (or process-environment-aliases process-environment))
+                   magik-session-current-command (mapconcat #'identity args " "))
+      (and (stringp version)
+           (boundp 'magik-version-current)
+           (set 'magik-version-current version))
 
       (insert (format "\nCwd is: %s\n\n" default-directory))
       (magik-session-start-process args))
@@ -417,7 +416,7 @@ Returns nil if FILE cannot be expanded."
 (defun magik-aliases-update-menu ()
   "Update the dynamic Aliases submenu."
   (interactive)
-  (if (eq major-mode 'magik-aliases-mode)
+  (when (derived-mode-p 'magik-aliases-mode)
       (let ((aliases (magik-aliases-list))
             entries def)
         (while aliases
@@ -467,7 +466,7 @@ Returns nil if FILE cannot be expanded."
                       (append default-files lp-files buffers rescan))))
 
 ;;; Package initialisation
-(add-hook 'magik-aliases-mode-hook 'magik-aliases-update-sw-menu)
+(add-hook 'magik-aliases-mode-hook #'magik-aliases-update-sw-menu)
 
 (modify-syntax-entry ?_ "w" magik-aliases-mode-syntax-table)
 (modify-syntax-entry ?: "w" magik-aliases-mode-syntax-table)
@@ -476,10 +475,8 @@ Returns nil if FILE cannot be expanded."
 (modify-syntax-entry ?\n ">" magik-aliases-mode-syntax-table)
 
 ;;; Package registration
-(or (assoc "aliases$" auto-mode-alist)
-    (push '("aliases$" . magik-aliases-mode) auto-mode-alist))
-(or (assoc "aliases.txt$" auto-mode-alist)
-    (push '("aliases.txt$" . magik-aliases-mode) auto-mode-alist))
+(add-to-list 'auto-mode-alist '("aliases\\'" . magik-aliases-mode))
+(add-to-list 'auto-mode-alist '("aliases.txt\\'" . magik-aliases-mode))
 
 ;;MSB configuration
 (defun magik-aliases-msb-configuration ()
@@ -490,7 +487,7 @@ Returns nil if FILE cannot be expanded."
          (handle (1- (nth 1 last))))
     (setcdr precdr (list
                     (list
-                     '(eq major-mode 'magik-aliases-mode)
+                     '(derived-mode-p 'magik-aliases-mode)
                      handle
                      "Aliases Files (%d)")
                     last))))

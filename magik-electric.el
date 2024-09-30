@@ -107,11 +107,7 @@
   (setq magik-electric-mode
         (if (null arg)
             (not magik-electric-mode)
-          (> (prefix-numeric-value arg) 0)))
-  (message (if magik-electric-mode
-               "Electric Magik on"
-             "Electric Magik off")))
-(defalias 'magik-electric-toggle 'magik-electric-mode) ;compatibility
+          (> (prefix-numeric-value arg) 0))))
 
 (defun magik-electric-hash (arg)
   "insert the char, `#', and if this is the first `#' on the line and
@@ -131,7 +127,7 @@ the previous line starts with a `#' align with that."
   ;;first prepare the line we are inserting on
   (beginning-of-line)
   (let ((blank-linep (looking-at "^\\s-*$"))
-        (end-of-bufferp (save-excursion (end-of-line) (eq (point) (point-max)))))
+        (end-of-bufferp (save-excursion (end-of-line) (eobp))))
     (and blank-linep (delete-horizontal-space))
     (if (or (not blank-linep) end-of-bufferp)
         (progn
@@ -200,7 +196,7 @@ the previous line starts with a `#' align with that."
       (self-insert-command arg)))
    ((and (or doit
              (and magik-electric-mode
-                  (or (eq (point) (point-max))
+                  (or (eobp)
                       (looking-at "[ \t]*$"))
                   (save-excursion
                     (not (re-search-backward "[#\"]" (line-beginning-position) t)))))
@@ -268,8 +264,7 @@ the previous line starts with a `#' align with that."
             (save-excursion
               (and (string-match "classify_level=deprecated" str) ;Was it deprecated?
                    (goto-char pt)                                 ;place point ready to insert deprecated template
-                   (magik-pragma-insert-deprecated-template)      ;because this fn assumes that it is on the pragma line
-                   )))
+                   (magik-pragma-insert-deprecated-template))))   ;because this fn assumes that it is on the pragma line
         (let ((str (if (> (length line) 1)
                        (cadr line)
                      magik-electric-default-pragma)))
