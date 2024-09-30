@@ -1,4 +1,4 @@
-;;; magik-mode.el --- Emacs major mode for Smallworld Magik files
+;;; magik-mode.el --- Emacs major mode for Smallworld Magik files  -*- lexical-binding: t; -*-
 
 ;; Package-Version: 0.3.3
 ;; Package-Requires: ((emacs "24.4") (compat "28.1"))
@@ -29,14 +29,15 @@
   (defvar msb-menu-cond)
   (defvar ac-sources)
   (defvar ac-prefix)
-  (defvar ac-modes)
-  (require 'magik-indent)
-  (require 'magik-electric)
-  (require 'magik-pragma))
+  (defvar ac-modes))
 
 (require 'compat)
 (require 'imenu)
+(require 'magik-electric)
+(require 'magik-indent)
+(require 'magik-pragma)
 (require 'magik-template)
+(require 'magik-utils)
 
 (defgroup magik nil
   "Customise Magik Language group."
@@ -130,18 +131,14 @@ concrete implementations."
 
   (compat-call setq-local
                font-lock-defaults '((magik-font-lock-keywords
-                                     magik-font-lock-keywords-1
-                                     magik-font-lock-keywords-2
-                                     magik-font-lock-keywords-3
-                                     magik-font-lock-keywords-4
-                                     magik-font-lock-keywords-5)
-                                    nil t
-                                    ((?_ . "w"))
-                                    magik-goto-code
-                                    (font-lock-fontify-buffer-function   . magik-font-lock-fontify-buffer)
-                                    (font-lock-fontify-region-function   . magik-font-lock-fontify-region)
-                                    (font-lock-unfontify-buffer-function . magik-font-lock-unfontify-buffer))
-               indent-line-function 'magik-indent-line))
+				    magik-font-lock-keywords-1
+				    magik-font-lock-keywords-2
+				    magik-font-lock-keywords-3
+				    magik-font-lock-keywords-4
+				    magik-font-lock-keywords-5)
+				   nil t
+				   ((?_ . "w")))
+	      indent-line-function 'magik-indent-line))
 
 (defvar magik-menu nil
   "Keymap for the Magik buffer menu bar.")
@@ -357,7 +354,7 @@ concrete implementations."
 
 (defface magik-method-face
   '((t (:inherit font-lock-function-name-face)))
-  "Font-lock Face to use when displaying method names and method and procedure keywords."
+  "Face to use for method names and method and procedure keywords."
   :group 'magik-faces)
 
 (defface magik-label-face
@@ -430,7 +427,7 @@ concrete implementations."
     ("def_slotted_exemplar" .
      "^[sw:]?def_slotted_exemplar(.*")
     )
-  "List of regexp strings which can be used for searching for a magik-specific string in a buffer.")
+  "Regexps to use for searching for finding a magik-specific string in a buffer.")
 
 (defvar magik-keyword-kleenean
   '("false" "true" "maybe")
@@ -569,13 +566,14 @@ See `magik-font-lock-keywords-1' and `magik-font-lock-keywords-2'."
     ))
   "Font lock setting for 4th level of Magik fontification.
 As 1st level but also fontifies all Magik keywords according their
-different classifications.  ie. loop keywords are fontified in the same face."
+different classifications."
   :group 'magik
   :type 'sexp)
 
 (defcustom magik-font-lock-keywords-5
   (append magik-font-lock-keywords-4 nil)
-  "Provides an easy user configurable level for personal/site fontification of styles.  Based from `magik-font-lock-keywords-4'."
+  "Provides an user configurable level for fontification of styles.
+Based from `magik-font-lock-keywords-4'."
   :group 'magik
   :type 'sexp)
 
@@ -720,97 +718,6 @@ Use auto-complete mode \"g\" symbol convention to represent a global.")
                (looking-at "_else\\|_elif\\|_finally\\|_using\\|_with\\|_when\\|_protection\\|_end"))
           (magik-indent-command)))))
 
-;;Actually only used by the Magik-Patch minor mode but we need a hook here
-;;because a function must be referred to in font-lock-defaults.
-(defvar magik-goto-code-function 'point-min
-  "Function used to place point on the line immediately preceeding Magik code.")
-
-(defun magik-goto-code ()
-  "Goto start of code."
-  (funcall magik-goto-code-function))
-
-(defun magik-font-lock-fontify-buffer ()
-  (let ((verbose (if (numberp font-lock-verbose)
-                     (> (buffer-size) font-lock-verbose)
-                   font-lock-verbose))
-        (code-start (save-excursion (magik-goto-code))))
-    (with-temp-message
-        (when verbose
-          (format "Fontifying %s..." (buffer-name)))
-      ;; Make sure we have the right `font-lock-keywords' etc.
-      (unless font-lock-mode
-        (font-lock-set-defaults))
-      ;; Make sure we fontify etc. in the whole buffer.
-      (save-restriction
-        (widen)
-        (condition-case nil
-            (save-excursion
-              (save-match-data
-                (font-lock-fontify-region code-start (point-max) verbose)
-                (font-lock-after-fontify-buffer)
-                (setq font-lock-fontified t)))
-          ;; We don't restore the old fontification, so it's best to unfontify.
-          (quit (font-lock-unfontify-buffer))))
-      ;; Make sure we undo `font-lock-keywords' etc.
-      (unless font-lock-mode
-        (font-lock-unset-defaults)))))
-
-(defun magik-font-lock-unfontify-buffer ()
-  "Make sure we unfontify etc.  in the whole buffer."
-  (save-restriction
-    (widen)
-    (font-lock-unfontify-region (save-excursion (magik-goto-code)) (point-max))
-    (font-lock-after-unfontify-buffer)
-    (setq font-lock-fontified nil)))
-
-(defun magik-font-lock-fontify-region (beg end loudly)
-  (let*
-      ((modified (buffer-modified-p))
-       (buffer-undo-list t)
-       (inhibit-read-only t)
-       (inhibit-point-motion-hooks t)
-       (inhibit-modification-hooks t)
-       deactivate-mark buffer-file-name buffer-file-truename
-       (old-syntax-table (syntax-table))
-       (code-start (save-excursion (magik-goto-code))))
-    (unwind-protect
-        (save-restriction
-          (widen)
-          ;; Use the fontification syntax table, if any.
-          (when font-lock-syntax-table
-            (set-syntax-table font-lock-syntax-table))
-          ;; check to see if we should expand the beg/end area for
-          ;; proper multiline matches
-          (when (and (boundp 'font-lock-multiline)
-                     font-lock-multiline
-                     (> beg code-start)
-                     (get-text-property (1- beg) 'font-lock-multiline))
-            ;; We are just after or in a multiline match.
-            (setq beg (or (previous-single-property-change
-                           beg 'font-lock-multiline)
-                          code-start))
-            (goto-char beg)
-            (setq beg (line-beginning-position)))
-          (when (and (boundp 'font-lock-multiline) font-lock-multiline)
-            (setq end (or (text-property-any end (point-max)
-                                             'font-lock-multiline nil)
-                          (point-max))))
-          (goto-char end)
-          (setq end (line-beginning-position 2))
-          (if (and (>= end code-start) (< beg code-start))
-              (setq beg code-start))
-          (when (and (>= beg code-start)
-                     (>= end code-start))
-            ;; Now do the fontification.
-            (font-lock-unfontify-region beg end)
-            (unless font-lock-keywords-only
-              (font-lock-fontify-syntactically-region beg end loudly))
-            (font-lock-fontify-keywords-region beg end loudly)))
-      ;; Clean up.
-      (set-syntax-table old-syntax-table))
-    (if (and (not modified) (buffer-modified-p))
-        (set-buffer-modified-p nil))))
-
 (defun magik-toggle-transmit-debug-p (&optional arg)
   "Toggle transmission of #DEBUG statements in Magik code.
 Optional argument ARG .."
@@ -854,7 +761,7 @@ Optional argument ARG .."
   "Insert a newline and indent.  (To insert a newline and not indent, use \\[electric-newline-and-maybe-indent])."
   (interactive "*")
   (if (eq major-mode 'magik-session-mode)
-      (error "Your magik shell buffer has got into magik mode!  To recover, type `M-x magik-session-mode'.  Please report this bug."))
+      (error "Your magik shell buffer has got into magik mode!  To recover, type `M-x magik-session-mode'"))
   (if abbrev-mode (save-excursion (expand-abbrev)))
   (if (save-excursion
         (back-to-indentation)
@@ -893,11 +800,11 @@ Optional argument ARG .."
   "Return cons cell describing the method name parts (NAME . TYPE).
 For normal methods:
   NAME is the method name root
-  TYPE is '^<<' or '<<' or '()' or '()<<' or '()^<<' or empty string.
+  TYPE is `^<<' or `<<' or `()' or `()<<' or `()^<<' or empty string.
 
 For array methods
   NAME is nil
-  TYPE is '[]' or '[]<<' or '[]^<<' or '[,]' or '[,]<<' or '[,]^<<' etc."
+  TYPE is `[]' or `[]<<' or `[]^<<' or `[,]' or `[,]<<' or `[,]^<<' etc."
   (if (eq (elt name 0) ?\[)
       (cons nil name)
     (save-match-data
@@ -910,7 +817,7 @@ For array methods
 If more than one definition is found in the buffer, you will be
 given the opportunity to visit each definition.
 Also the search string is added to isearch mode's regexp ring so that
-you can use \\[isearch-forward-regexp] and use M-p to recall the search."
+you can use \\[isearch-forward-regexp] and use \\[isearch-ring-retreat] to recall the search."
   (interactive
    (list
     (read-string "Method Name: " (current-word))
@@ -1090,8 +997,8 @@ If the last command was \\[magik-mark-method] then that region will be copied in
          x)))
 
 (defun magik-function (cmd &rest args)
-  "This function generates magik code from the supplied arguments.
-e.g. (magik-function \"system.test\" \"file\" 'unset 4) returns the string
+  "Generate magik code from the supplied arguments.
+e.g. (magik-function \"system.test\" \"file\" \\='unset 4) returns the string
      system.test(\\\"file\\\", _unset, 4)
 Argument CMD ...
 Optional argument ARGS ..."
@@ -1524,8 +1431,9 @@ If PT is given, goto that char position."
   (back-to-indentation)
   (let
       ((col (current-column))
-       (str (gsub (buffer-substring-no-properties
-                   (point) (line-end-position)) "\"" "\" + %\" + \"")))
+       (str (string-replace  "\"" "\" + %\" + \""
+			     (buffer-substring-no-properties
+			      (point) (line-end-position)))))
     (beginning-of-line)
     (indent-to col)
     (insert "write(\""

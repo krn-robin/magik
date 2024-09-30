@@ -1,4 +1,4 @@
-;;; magik-msg.el --- mode for editing Magik msg and hmsg Message files.
+;;; magik-msg.el --- mode for editing Magik msg and hmsg Message files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@
 (defun magik-msg-customize ()
   "Open Customization buffer for Msg Mode."
   (interactive)
-  (customize-group 'msg))
+  (customize-group 'magik-msg))
 
 (defun magik-msg-forward-message ()
   "Put point at beginning of line of next message."

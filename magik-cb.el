@@ -1,4 +1,4 @@
-;;; magik-cb.el --- Class Browser for Magik methods and classes.
+;;; magik-cb.el --- Class Browser for Magik methods and classes.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -82,6 +82,7 @@
 (eval-when-compile
   (defvar msb-menu-cond))
 
+(require 'magik-aliases)
 (require 'magik-mode)
 (require 'magik-session)
 (require 'magik-utils)
@@ -1022,9 +1023,9 @@ in \"*cb2*\" and note that \"*cb2*\" is now in family mode.
                                         ;(erase-buffer)
     (insert-file-contents (magik-cb-temp-file-name p) nil nil nil t)
     (if (search-forward "\C-l" nil t)
-        (progn
-          (backward-delete-char 1)
-          (insert "\n\n\n")))
+	(progn
+	  (delete-char -1)
+	  (insert "\n\n\n")))
     (goto-char (point-min))
     (if (re-search-forward "^[^ ]" nil t)
         (backward-char))
@@ -1386,22 +1387,22 @@ Don't ask for a response, though."
 (defun magik-cb-display-topic (str)
   (let ((cb2 (magik-cb2-buffer)))
     (if (and (get-buffer cb2) (eq magik-cb2-mode 'topic))
-        (let ((on-p (magik-cb-topic-on-p str))
-              (term-p (member str magik-cb-thermometer-group))
-              buffer-read-only
-              case-fold-search)
-          (set-buffer cb2)
-          (goto-char (point-min))
-          (search-forward (concat " " str " "))
-          (backward-char (+ 2 (length str)))
-          (backward-delete-char 1)
-          (insert
-           (cond ((and term-p on-p)       "*")
-                 ((and term-p (not on-p)) ".")
-                 (on-p                    "+")
-                 ((not on-p)              "-")
-                 (t ;should never get here
-                  "?")))))))
+	(let ((on-p (magik-cb-topic-on-p str))
+	      (term-p (member str magik-cb-thermometer-group))
+	      buffer-read-only
+	      case-fold-search)
+	  (set-buffer cb2)
+	  (goto-char (point-min))
+	  (search-forward (concat " " str " "))
+	  (backward-char (+ 2 (length str)))
+	  (delete-char -1)
+	  (insert
+	   (cond ((and term-p on-p)       "*")
+		 ((and term-p (not on-p)) ".")
+		 (on-p                    "+")
+		 ((not on-p)              "-")
+		 (t ;should never get here
+		  "?")))))))
 
 (defun magik-cb-toggle (str)
   "Toggle the topic or flag, STR.  Set, send and display it.
@@ -1684,15 +1685,15 @@ some state for a clean exit."
   (with-current-buffer (magik-cb-buffer)
     (save-excursion
       (if (eq magik-cb-cursor-pos 'method-name)
-          (progn
-            (magik-cb-set-buffer-m)
-            (backward-delete-char arg killflag))
-        (magik-cb-set-buffer-c)
-        (if (bobp)
-            (progn (magik-cb-set-buffer-m)
-                   (goto-char (point-max))
-                   (backward-delete-char arg killflag))
-          (backward-delete-char arg killflag))))
+	  (progn
+	    (magik-cb-set-buffer-m)
+	    (delete-char (- arg) killflag))
+	(magik-cb-set-buffer-c)
+	(if (bobp)
+	    (progn (magik-cb-set-buffer-m)
+		   (goto-char (point-max))
+		   (delete-char (- arg) killflag))
+	  (delete-char (- arg) killflag))))
     (magik-cb-send-modeline-and-pr)))
 
 (defun magik-cb-delete-char (arg &optional killflag)

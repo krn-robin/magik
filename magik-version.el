@@ -1,4 +1,4 @@
-;;; magik-version.el --- Interface to the gis_version environment switching tool.
+;;; magik-version.el --- Interface to the gis_version environment switching tool.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@
 
 ;;; Code:
 
+(require 'magik-aliases)
 (require 'magik-utils)
-(require 'magik-mode)
+(require 'magik-session)
 
 (defgroup magik-version nil
   "Multiple Magik Environments."
@@ -110,7 +111,7 @@ This provides an alternative interface to a gis_version program."
   "Run GIS command in selected version."
   (interactive)
   (beginning-of-line)
-  (let (stream version buffer)
+  (let (stream buffer)
     (setq stream (car (magik-version-select-internal))
           buffer  (concat "*gis " stream "*"))
     (magik-session buffer)
@@ -318,17 +319,17 @@ Will set `gis-version-file' to FILE."
 
       (if (search-forward "-------" nil t) (forward-line 1)) ;skip a header
       (while (re-search-forward magik-version-match nil t)
-        (beginning-of-line)
-        (forward-char 1)
-        (backward-delete-char 1)
-        (insert " ")
-        (cond ((string-match magik-version-invalid-string (match-string-no-properties 3))
-               nil)
-              ((file-exists-p (match-string-no-properties 3))
-               nil)
-              (t
-               (goto-char (match-beginning 3))
-               (insert magik-version-invalid-string " "))))))
+	(beginning-of-line)
+	(forward-char 1)
+	(delete-char -1)
+	(insert " ")
+	(cond ((string-match magik-version-invalid-string (match-string-no-properties 3))
+	       nil)
+	      ((file-exists-p (match-string-no-properties 3))
+	       nil)
+	      (t
+	       (goto-char (match-beginning 3))
+	       (insert magik-version-invalid-string " "))))))
 
   (if (stringp magik-version-current)
       (save-excursion
@@ -416,18 +417,6 @@ Return (STREAM VERSION SMALLWORLD_GIS)."
   (setenv "SMALLWORLD_GIS" smallworld-gis)
   (setenv "SW_STREAM" stream)
   (setenv "SW_VERSION" version))
-
-(defun magik-version-call-process-windows (&rest args)
-  "Run Windows command and return the environment variables it sets up."
-  (let ((default-directory temporary-file-directory) ;avoid command shell complaining about cwd being a UNC path
-        (w32-quote-process-args t)   ;ensure quoting of arguments
-        (win32-quote-process-args t));
-    (apply 'call-process args)))
-
-(defun magik-version-call-process-unix (command)
-  "Run unix COMMAND and return the environment variables it sets up."
-  (call-process "/bin/sh" nil t nil "-c"
-                (concat "SHELL=/bin/sh ; export SHELL ; " command " ; env")))
 
 (defun magik-version-prepend-sw-paths (orig new)
   "Ensure Smallworld directories are prepended to PATH variable.

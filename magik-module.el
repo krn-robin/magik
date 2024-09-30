@@ -1,4 +1,4 @@
-;;; magik-module.el --- mode for editing Magik module.def files.
+;;; magik-module.el --- mode for editing Magik module.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -178,7 +178,6 @@ You can customise Module Mode with the `module-mode-hook'.
   (make-local-variable 'font-lock-defaults)
 
   (use-local-map magik-module-mode-map)
-  (easy-menu-add magik-module-menu)
   (set-syntax-table magik-module-mode-syntax-table)
 
   (setq major-mode 'magik-module-mode
