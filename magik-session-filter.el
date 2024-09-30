@@ -1,4 +1,4 @@
-;;; magik-session-filter.el --- deal with the output from the magik process.
+;;; magik-session-filter.el --- deal with the output from the magik process.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@
 
 (require 'magik-mode)
 (require 'magik-session)
+(require 'magik-utils)
 
 (defvar magik-session-filter-state "\C-a"
   "Either \"\\C-a\", \"\\C-e\, \"\\C-f\" or \" \".")

@@ -1,4 +1,4 @@
-;;; magik-session.el --- mode for running a Smallworld Magik interactive process
+;;; magik-session.el --- mode for running a Smallworld Magik interactive process    -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@
 (require 'magik-electric)
 (require 'magik-indent)
 (require 'magik-pragma)
-(or (boundp 'ac-sources) (setq ac-sources nil))
+(require 'magik-utils)
 
 (defcustom magik-session-buffer nil
   "*The default Smallworld session.
@@ -215,13 +215,11 @@ this variable buffer-local by putting the following in your .emacs
 (defvar magik-session-current-command nil
   "The current `magik-session-command' in the current buffer.")
 
-(defvar magik-session-exec-path nil
+(defvar-local magik-session-exec-path nil
   "Stored value of `exec-path' when the GIS process was started.")
-(make-variable-buffer-local 'magik-session-exec-path)
 
-(defvar magik-session-process-environment nil
+(defvar-local magik-session-process-environment nil
   "Stored value of `process-environment' when the GIS process was started.")
-(make-variable-buffer-local 'magik-session-process-environment)
 
 (defvar magik-session-cb-buffer nil
   "The Class browser buffer associated with the GIS process.")
@@ -289,25 +287,10 @@ string for next time.")
                   (repeat string)))
 (put 'magik-session-command-history 'permanent-local t)
 
-(defcustom magik-session-kill-process-function 'magik-utils-delete-process-safely
-  "*The function used to terminate a Magik PROCESS in the GIS buffer.
-
-`kill-process'   terminates the process but the process may tidy itself up
-     before exiting and so Emacs will not display the terminated
-     process message in the buffer until that is complete.
-
-`delete-process' terminates the process and Emacs immediately displays the
-     process terminated message.
-
-`quit-process'   Sends SIGQUIT signal if the OS implements it.
-     Not implemented on Windows OSes."
-  :group 'magik
-  :type  'function)
-
 (defun magik-session-customize ()
   "Open Customization buffer for Magik Session Mode."
   (interactive)
-  (customize-group 'gis))
+  (customize-group 'magik-session))
 
 (defun magik-session-prompt-update-font-lock ()
   "Update the Font-lock variable `magik-session-font-lock-keywords' with current `magik-session-prompt' setting."
@@ -672,7 +655,7 @@ Adds `magik-session-current-command' to `magik-session-command-history' if not a
 
   ;;MF New bit for connecting to the method finder:
   ;;MF We nuke the current cb first and reconnect later.
-  (when (and magik-cb-dynamic (get-buffer magik-session-cb-buffer))
+  (when (get-buffer magik-session-cb-buffer)
     (let ((magik-cb-process (get-buffer-process magik-session-cb-buffer)))
       (if magik-cb-process (delete-process magik-cb-process)))
     (process-send-string magik-session-process "_if method_finder _isnt _unset\n_then\n  method_finder.lazy_start?\n  method_finder.send_socket_to_emacs()\n_endif\n$\n"))
@@ -718,26 +701,24 @@ there is not, prompt for a command to run, and then run it."
   (interactive)
   (if command (setq magik-session-command command))
   (let (dir
-        cmd
-        args
-        ;;read-string's history arg does not work with buffer-local variables
-        ;;history also always has something see Package Registration at end
-        (command-history magik-session-command-history)
-        alias-beg
-        alias-expansion
-        (alias-buffer "*temp gis alias buffer*")
-        (keepgoing t)
-        (magik-session-start-process-pre-hook magik-session-start-process-pre-hook)
-        (buffer (magik-utils-get-buffer-mode (cond (buffer buffer)
-                                                   ((eq major-mode 'magik-session-mode) (buffer-name))
-                                                   (t nil))
-                                             'magik-session-mode
-                                             "Enter Magik process buffer:"
-                                             (or magik-session-buffer magik-session-buffer-default-name)
-                                             'magik-session-buffer-alist-prefix-function
-                                             (generate-new-buffer-name magik-session-buffer-default-name)))
-        (rev-1920-regexp " +\\[rev\\(19\\|20\\)\\] +")
-        (alias-subst-regexp "\\\\!\\(\\\\\\)?\\*"))
+	cmd
+	args
+	;;read-string's history arg does not work with buffer-local variables
+	;;history also always has something see Package Registration at end
+	(command-history magik-session-command-history)
+	alias-beg
+	alias-expansion
+	(alias-buffer "*temp gis alias buffer*")
+	(keepgoing t)
+	(magik-session-start-process-pre-hook magik-session-start-process-pre-hook)
+	(buffer (magik-utils-get-buffer-mode (cond (buffer buffer)
+						   ((eq major-mode 'magik-session-mode) (buffer-name))
+						   (t nil))
+					     'magik-session-mode
+					     "Enter Magik process buffer:"
+					     (or magik-session-buffer magik-session-buffer-default-name)
+					     'magik-session-buffer-alist-prefix-function
+					     (generate-new-buffer-name magik-session-buffer-default-name))))
     (if (and (get-buffer-process buffer)
              (eq (process-status (get-buffer-process buffer)) 'run))
         (progn
@@ -756,44 +737,35 @@ there is not, prompt for a command to run, and then run it."
                  (file-readable-p "~/.alias"))
             (insert-file-contents "~/.alias"))
 
-        (while keepgoing
-          (setq keepgoing nil)
-          (setq magik-session-command (sub magik-session-command rev-1920-regexp " "))
-          (or (eq (string-match "\\[" magik-session-command) 0)
-              (setq magik-session-command (concat "[" default-directory "] " magik-session-command)))
-          (or command
-              (setq magik-session-command
-                    (read-string "Magik command: "
-                                 (car command-history)
-                                 'command-history)))
-          (if (string-match rev-1920-regexp magik-session-command)
-              (progn
-                (setq keepgoing t)
-                (setq magik-session-command (sub magik-session-command rev-1920-regexp " "))))
-          (or (eq (string-match "\\[" magik-session-command) 0)
-              (setq magik-session-command (concat "[" default-directory "] " magik-session-command)))
-          (string-match "\\[\\([^\]]*\\)\\] *\\([^ ]*\\) *\\(.*\\)" magik-session-command)
-          (setq dir  (substring magik-session-command (match-beginning 1) (match-end 1)))
-          (setq cmd  (substring magik-session-command (match-beginning 2) (match-end 2)))
-          (setq args (substring magik-session-command (match-beginning 3) (match-end 3)))
-
-          (goto-char (point-min))
-          (if (re-search-forward (concat "^alias[ \t]+" (regexp-quote cmd) "[ \t]+") nil t)
-              (progn
-                (setq keepgoing t)
-                (setq alias-beg (match-end 0))
-                (goto-char alias-beg)
-                (if (looking-at "['\"]")
-                    (progn
-                      (cl-incf alias-beg)
-                      (end-of-line)
-                      (re-search-backward "['\"]"))
-                  (end-of-line))
-                (setq alias-expansion (buffer-substring alias-beg (point)))
-                (or (string-match alias-subst-regexp alias-expansion)
-                    (setq alias-expansion (concat alias-expansion " \\!*")))
-                (setq alias-expansion (sub alias-expansion alias-subst-regexp args))
-                (setq magik-session-command (concat "[" dir "] " alias-expansion)))))
+	(while keepgoing
+	  (setq keepgoing nil)
+	  (or (eq (string-match "\\[" magik-session-command) 0)
+	      (setq magik-session-command (concat "[" default-directory "] " magik-session-command)))
+	  (or command
+	      (setq magik-session-command
+		    (read-string "Magik command: "
+				 (car command-history)
+				 'command-history)))
+	  (or (eq (string-match "\\[" magik-session-command) 0)
+	      (setq magik-session-command (concat "[" default-directory "] " magik-session-command)))
+	  (string-match "\\[\\([^\]]*\\)\\] *\\([^ ]*\\) *\\(.*\\)" magik-session-command)
+	  (setq dir  (substring magik-session-command (match-beginning 1) (match-end 1)))
+	  (setq cmd  (substring magik-session-command (match-beginning 2) (match-end 2)))
+	  (setq args (substring magik-session-command (match-beginning 3) (match-end 3)))
+	  (goto-char (point-min))
+	  (if (re-search-forward (concat "^alias[ \t]+" (regexp-quote cmd) "[ \t]+") nil t)
+	      (progn
+		(setq keepgoing t)
+		(setq alias-beg (match-end 0))
+		(goto-char alias-beg)
+		(if (looking-at "['\"]")
+		    (progn
+		      (cl-incf alias-beg)
+		      (end-of-line)
+		      (re-search-backward "['\"]"))
+		  (end-of-line))
+		(setq alias-expansion (buffer-substring alias-beg (point)))
+		(setq magik-session-command (concat "[" dir "] " alias-expansion)))))
 
         (kill-buffer alias-buffer))
 
@@ -824,17 +796,16 @@ there is not, prompt for a command to run, and then run it."
     (call-interactively 'gis)))
 
 (defun magik-session-kill-process ()
-  "Kill the current gis process.
-Uses `magik-session-kill-process-function' function to kill the process given in `magik-session-process'."
+  "Kill the current gis process."
   (interactive)
   (if (and magik-session-process
            (eq (process-status magik-session-process) 'run)
            (y-or-n-p "Kill the Magik process? "))
       (let ((status (process-status magik-session-process)))
-        (funcall magik-session-kill-process-function magik-session-process)
-        (sit-for 0.1)
-        (if (eq status (process-status magik-session-process))
-            (insert "\nMagik is still busy and will exit at an appropriate point. Please be patient... \n")))))
+	(kill-process magik-session-process)
+	(sit-for 0.1)
+	(if (eq status (process-status magik-session-process))
+	    (insert "\nMagik is still busy and will exit at an appropriate point. Please be patient... \n")))))
 
 (defun magik-session-query-interrupt-shell-subjob ()
   "Ask and then comint-interrupt-subjob."
