@@ -111,9 +111,8 @@ This provides an alternative interface to a gis_version program."
   "Run GIS command in selected version."
   (interactive)
   (beginning-of-line)
-  (let (stream buffer)
-    (setq stream (car (magik-version-select-internal))
-          buffer  (concat "*gis " stream "*"))
+  (let* ((stream (car (magik-version-select-internal)))
+         (buffer (concat "*gis " stream "*")))
     (magik-session buffer)
     (setq magik-version-current stream)))
 
@@ -139,7 +138,6 @@ has more than one aliases file available."
                     (path (cdr (assoc lp lp-alist))))
                (if path
                    (setq alias-file (concat path "/config/gis_aliases"))))))
-      (message alias-file)
       (when alias-file
         (kill-buffer (current-buffer))
         (find-file alias-file)
@@ -258,7 +256,7 @@ suitable for selection."
           (product-version-file (concat (file-name-as-directory root)
                                         "config/PRODUCT_VERSION"))
           name version)
-     (if (file-exists-p product-version-file)
+     (when (file-exists-p product-version-file)
          (with-current-buffer (get-buffer-create " *product_version*")
            (erase-buffer)
            (insert-file-contents product-version-file)
@@ -342,7 +340,7 @@ Will set `gis-version-file' to FILE."
 
   (setq magik-version-position (point))
   (save-match-data
-    (if (search-forward "-------" nil t) (setq magik-version-position (point)))) ;skip a header
+    (when (search-forward "-------" nil t) (setq magik-version-position (point)))) ;skip a header
 
   (setq buffer-read-only t)
   (set-buffer-modified-p nil)
