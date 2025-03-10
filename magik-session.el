@@ -213,7 +213,7 @@ this variable buffer-local by putting the following in your .emacs
   "The current `magik-session-command' in the current buffer.")
 
 (defvar-local magik-session-exec-path nil
-  "Stored value of `exec-path' when the GIS process was started.")
+  "Stored value of variable `exec-path' when the GIS process was started.")
 
 (defvar-local magik-session-process-environment nil
   "Stored value of `process-environment' when the GIS process was started.")
@@ -1540,7 +1540,7 @@ where MODE is the name of the major mode with the '-mode' postfix."
   (define-key magik-session-mode-map "\ep"       'magik-session-recall-prev-cmd)
   (define-key magik-session-mode-map "\en"       'magik-session-recall-next-cmd)
   (define-key magik-session-mode-map "\r"        'magik-session-newline)
-  (define-key magik-session-mode-map " "         yas-maybe-expand)
+  (define-key magik-session-mode-map " "         'magik-yas-maybe-expand)
   (define-key magik-session-mode-map "\C-?"      'magik-session-backward-delete-char)
   (define-key magik-session-mode-map "\C-a"      'magik-session-beginning-of-line)
   (define-key magik-session-mode-map "\C-d"      'magik-session-delete-char)
