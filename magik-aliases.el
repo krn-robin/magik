@@ -240,25 +240,16 @@ when the buffer is displayed:
         (t
          magik-aliases-switch-to-buffer)))
 
-(defun magik-aliases-program-set (&optional default)
+(defun magik-aliases-program (smallworld-gis)
   "Return the program to use to operate on a gis_aliases file."
-  (let ((path magik-aliases-program-path)
-        (smallworld-gis magik-smallworld-gis)
-        program)
-    (while path
-      (setq program (expand-file-name
-                     (concat (file-name-as-directory (car path)) default))
-            path (cdr path))
-      (if (file-executable-p program)
-          (setq path nil)
-        (setq program nil)))
-    (unless program
-      (setq program (expand-file-name
-                     (concat smallworld-gis "/config/"
-                             (file-name-as-directory (car magik-aliases-program-path)) magik-aliases-program)))
-      (unless (file-executable-p program)
-        (setq program nil)))
-    (or program default)))
+  (let* ((gis-path (concat smallworld-gis "/config/"))
+	 (path (append magik-aliases-program-path
+		       (mapcar (lambda (p)
+				 (expand-file-name
+				  (concat gis-path
+					  (file-name-as-directory p))))
+			       magik-aliases-program-path))))
+    (locate-file magik-aliases-program path)))
 
 (defun magik-aliases-run-program (&optional alias file dir)
   "Run `runalias' on the aliases file.
@@ -279,7 +270,7 @@ With a prefix arg, ask user for current directory to use."
         ((null dir)
          (setq dir default-directory)))
 
-  (let ((program (magik-aliases-program-set magik-aliases-program))
+  (let ((program (magik-aliases-program magik-smallworld-gis))
         (args    magik-aliases-program-args)
         (file    (or file (buffer-file-name)))
         (buf     "gis")
