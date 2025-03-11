@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;;  The main entry point is `magik-calc-indent()'.
+;;  The main entry point is `magik-calc-indent'.
 ;;
 ;;  There are also entry separate entry points for tokenising
 ;; bits of magik.
@@ -444,7 +444,7 @@ Add a newline token unless the last token is an operator."
       ans)))
 
 (defun magik-tokenise-region-no-eol (start end)
-  "Like `magik-tokenise-region()' but with EOL tokens chopped off."
+  "Like `magik-tokenise-region' but with EOL tokens chopped off."
   (let
       ((reverse_ans (reverse (magik-tokenise-region start end))))
 
@@ -453,7 +453,7 @@ Add a newline token unless the last token is an operator."
     (reverse reverse_ans)))
 
 (defun magik-tokenise-region-no-eol-nor-point-min (start end)
-  "Like `magik-tokenise-region()' but with EOL/BOB tokens taken out."
+  "Like `magik-tokenise-region' but with EOL/BOB tokens taken out."
   (let
       ((ans (magik-tokenise-region-no-eol start end)))
     (if (equal (car (car ans)) "point-min")
@@ -461,7 +461,7 @@ Add a newline token unless the last token is an operator."
     ans))
 
 (defun magik-tokenise-line-no-eol-nor-point-min ()
-  "Like `magik-tokenise-line()' but with EOL and BOB tokens taken out."
+  "Like `magik-tokenise-line' but with EOL and BOB tokens taken out."
   (magik-tokenise-region-no-eol-nor-point-min (line-beginning-position) (line-end-position)))
 
 (defconst magik-transitions

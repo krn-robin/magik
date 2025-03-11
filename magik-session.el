@@ -1330,7 +1330,7 @@ If ARG is null, use a default of `magik-session-history-length'."
 ;;;  T R A C E B A C K
 ;;;
 
-;; support for `magik-session-traceback-print()'
+;; support for `magik-session-traceback-print'
 (defun magik-session-print-region-and-fold (start end switches)
   "Like `print-region-1' but with long lines folded first."
   (let ((name (concat (buffer-name) " Emacs buffer"))
