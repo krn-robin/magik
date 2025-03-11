@@ -37,7 +37,7 @@
 (defface magik-session-method-definition-face
   '((t :inherit font-lock-function-name-face
        :underline t))
-  "*Font-lock Face to highlight the method lines outputted.
+  "*Font Lock mode face used to highlight the method lines outputted.
 Outputted by apropos() and print_local_methods()."
   :group 'magik)
 

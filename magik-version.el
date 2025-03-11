@@ -46,7 +46,7 @@ This provides an alternative interface to a gis_version program."
                   (const nil)))
 
 (defcustom magik-version-match "^[* ] \\(\\S-+\\)\\s-*\\(\\S-+\\)\\s-*\\(.*\\)"
-  "*Regexp matching valid versions listed by `gis-version-program' or `gis-version-file'."
+  "*Regexp matching valid versions listed by `magik-version-file'."
   :group 'magik-version
   :type  'regexp)
 
@@ -61,7 +61,7 @@ This provides an alternative interface to a gis_version program."
   :type  'string)
 
 (defcustom magik-version-help-file-add "To add a new installation, press '+'.\nTo open the gis_version file, press 'o'.\n"
-  "Help text for Adding to `gis-version-file' displayed after `gis-version-help'."
+  "Help text for Adding to `magik-version-file' displayed after `magik-version-help'."
   :group 'magik-version
   :type  'string)
 
@@ -212,7 +212,7 @@ has more than one aliases file available."
   "Provide directory completion for finding Smallworld installations.
 Repeated TAB and \\[minibuffer-completion-help] still provide
 directory listing so users can navigate a directory structure looking
-for a Smallworld installation.  Only when `gis-version-smallworld-gis-p'
+for a Smallworld installation.  Only when `magik-version-smallworld-gis-p'
 returns t for a given path will the path be considered to be a real Smallworld
 installation directory suitable for selection."
   (if (magik-version-smallworld-gis-p string)
@@ -252,7 +252,7 @@ installation directory suitable for selection."
     path))
 
 (defun magik-version-file-add (root name version)
-  "Add a new entry to the file given by `gis-version-file'."
+  "Add a new entry to the file given by `magik-version-file'."
   (interactive
    (let* ((ok (or magik-version-file
                   (error "File interface is not being used")))
@@ -290,8 +290,8 @@ installation directory suitable for selection."
 
 (defun magik-version-file-create ()
   "Create a gis version format file based upon the current environment.
-Called if no magik-version program exists or `gis-version-file' is nil.
-Will set `gis-version-file' to FILE."
+Called if no magik-version program exists or `magik-version-file' is nil.
+Will set `magik-version-file' to FILE."
   (interactive)
   (find-file magik-version-file)
   (when (not (file-exists-p magik-version-file))
@@ -377,10 +377,10 @@ Will set `gis-version-file' to FILE."
   (magik-version-select))
 
 (defun magik-version-select ()
-  "Store the gis product name in the global variable `gis-version-current'.
+  "Store the gis product name in the global variable `magik-version-current'.
 So that `F2 z' will set the correct product's environment before starting
 the gis.  The frame and icon title strings will be modified according to
-`gis-version-frame-title-format' and `gis-version-icon-title-format'."
+`magik-version-frame-title-format' and `magik-version-icon-title-format'."
   (interactive)
   (let ((stream (car (magik-version-select-internal))))
     (setq-default magik-version-current stream)
@@ -439,7 +439,7 @@ prepended to PATH.
 On UNIX, PATH is modified to have SMALLWORLD appended.
 On Windows it is prepended.
 
-Also sets `gis-version-sw-path-list' to be the list of directories added to PATH
+Also sets `magik-version-sw-path-list' to be the list of directories added to PATH
 by the current Smallworld version."
   (save-match-data
     (let ((new-list  (delq nil (parse-colon-path new)))

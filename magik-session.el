@@ -421,7 +421,7 @@ Return a list of all the components of the COMMAND."
     buf))
 
 (defun magik-session-command-display (command)
-  "Return shortened Gis command suitable for display."
+  "Return shortened Magik session command suitable for display."
   (if (stringp command) ; defensive programming. Should be a string but need to avoid errors
       (let              ; because this function is called in a menu-update-hook
           ((command-len (- (min (length command) magik-session-command-history-max-length)))
@@ -668,14 +668,14 @@ if not already there."
 (defun magik-session (&optional buffer command)
   "Run a Gis process in a buffer in `magik-session-mode'.
 
-The command is typically \"sw_magik_win32\" or \"sw_magik_motif\", but
+The command is typically \"runalias\" or \"gis\", but
 can be any interactive program such as \"csh\".
 
 The program that is offered as a default is stored in the variable,
 `magik-session-command', which you can customise.  e.g.
 
-\(setq magik-session-command
-\"[$HOME] sw_magik_win32 -Mextdir %TEMP% -image $SMALLWORLD_GIS/images/gis.msf\"
+\(setopt magik-session-command
+\"[$HOME] runalias swaf_mega\"
 \)
 The command automatically expands environment variables using
 Windows %% and Unix $ and ${} nomenclature.
@@ -1230,7 +1230,7 @@ whether cursor point is placed at end of command.  Compare with
   (magik-session-recall "" 1 magik-session-recall-cmd-move-to-end))
 
 (defun magik-session-recall-prev-matching-cmd ()
-  "Recall the earlier and earlier GIS commands that match the part of the command.
+  "Recall the earlier and earlier Magik session commands that match the part of the command.
 Recalls before the cursor."
   (interactive "*")
   (magik-session-recall (buffer-substring
@@ -1240,7 +1240,7 @@ Recalls before the cursor."
                         nil))
 
 (defun magik-session-recall-next-matching-cmd ()
-  "Recall the earlier and earlier GIS commands that match the part of the command.
+  "Recall the earlier and earlier Magik session commands that match the part of the command.
 Recalls before the cursor."
   (interactive "*")
   (magik-session-recall (buffer-substring
@@ -1337,9 +1337,9 @@ If ARG is null, use a default of `magik-session-history-length'."
 ;;;  T R A C E B A C K
 ;;;
 
-;; support for `gis-traceback-print()'
+;; support for `magik-session-traceback-print()'
 (defun magik-session-print-region-and-fold (start end switches)
-  "Like `print-region-1()' but with long lines folded first."
+  "Like `print-region-1' but with long lines folded first."
   (let ((name (concat (buffer-name) " Emacs buffer"))
         (width tab-width))
     (save-excursion
@@ -1489,11 +1489,11 @@ An error is is searched using \"**** Error\"."
 
 (defun magik-session-drag-n-drop-load ()
   "Load a drag and dropped file into the Magik Session.
-If the previous buffer was a GIS session buffer and the previous event was
-a drag & drop event then we load the dropped file into the GIS session.
+If the previous buffer was a Magik session buffer and the previous event was
+a drag & drop event then we load the dropped file into the Magik session.
 
 The file must be in a Major mode that defines the function:
-  MODE-gis-drag-n-drop-load
+  MODE-drag-n-drop-load
 where MODE is the name of the major mode with the '-mode' postfix."
   (let (fn gis)
     ;;hopefully the tests are done in the cheapest, most efficient order
@@ -1502,7 +1502,7 @@ where MODE is the name of the major mode with the '-mode' postfix."
     (if (and (listp last-input-event)
              (eq (car last-input-event) 'drag-n-drop)
              (setq fn (intern (concat (substring (symbol-name major-mode) 0 -5)
-                                      "-gis-drag-n-drop-load")))
+                                      "-drag-n-drop-load")))
              (fboundp fn)
              (windowp (caadr last-input-event))
              (setq gis (window-buffer (caadr last-input-event)))
