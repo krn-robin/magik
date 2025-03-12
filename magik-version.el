@@ -1,4 +1,4 @@
-;;; magik-version.el --- Interface to the gis_version environment switching tool.
+;;; magik-version.el --- Interface to the gis_version environment switching tool.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@
 
 ;;; Code:
 
+(require 'magik-aliases)
 (require 'magik-utils)
-(require 'magik-mode)
+(require 'magik-session)
 
 (defgroup magik-version nil
   "Multiple Magik Environments."
@@ -141,7 +142,7 @@ Listed by `magik-version' or `magik-version-file'."
   (let* ((definition (magik-version-at-version-definition))
          (stream (nth 0 definition))
          (smallworld-gis (nth 2 definition))
-         (buffer (concat "*gis " stream "*")))
+         (buffer (concat magik-session-buffer-default-name " (" stream ")")))
     (setq magik-smallworld-gis smallworld-gis)
     (magik-session buffer)
     (setq magik-version-current stream
@@ -159,7 +160,7 @@ has more than one aliases file available."
          (smallworld-gis (nth 2 version-list))
          (lp-alist (magik-aliases-layered-products-file (magik-aliases-expand-file magik-aliases-layered-products-file smallworld-gis) smallworld-gis))
          alias-file)
-    (when (not stream)
+    (unless stream
       (error "Invalid selection"))
     (cond ((null lp-alist) nil)
           ((eq (length lp-alist) 1)
@@ -241,40 +242,6 @@ has more than one aliases file available."
   "Return t if PATH points to a Smallworld installation."
   (file-directory-p (file-name-concat (file-name-directory path) "config")))
 
-(defun magik-version-read-smallworld-gis-completion (string predicate flag)
-  "Provide directory completion for finding Smallworld installations.
-Repeated TAB and \\[minibuffer-completion-help] still provide
-directory listing so users can navigate a directory structure looking
-for a Smallworld installation.  Only when `gis-version-smallworld-gis-p'
-returns t for a given path will the path be considered to be a real Smallworld
-installation directory suitable for selection."
-  (if (magik-version-smallworld-gis-p string)
-      (cond ((eq flag #'lambda) t)
-            ((null flag)       t)
-            (t            string))
-    ;;    (cl-letf (((symbol-function `read-smallworld-gis-predicate) (d) (equal d (file-name-directory d))))
-    (let ((root (file-name-directory string))
-          (completions (all-completions string
-                                        'read-file-name-internal)))
-      ;;            #'(lambda (d) (equal d (file-name-directory d))))))
-      ;;            'read-smallworld-gis-predicate)))
-      (cond ((or (eq this-command 'minibuffer-completion-help)
-                 (and flag (eq this-command 'minibuffer-complete)))
-             ;;Provide directory completions for user feedback ONLY
-             (mapcar (function (lambda (d) (concat root d))) completions))
-            (flag
-             ;; all-completions. Do not want to return anything here
-             ;; otherwise any directory is accepted after a Return
-             nil)
-            (t
-             ;;try-completion
-             (setq completions
-                   (try-completion (file-name-nondirectory string)
-                                   (mapcar 'list completions)))
-             (if (eq completions t)
-                 string
-               (concat (or root "") completions)))))))
-
 (defun magik-version-read-smallworld-gis ()
   "Prompt for a valid value for SMALLWORLD_GIS."
   (let ((path
@@ -292,13 +259,13 @@ installation directory suitable for selection."
           (root (magik-version-read-smallworld-gis))
           (product-version-file (file-name-concat (file-name-as-directory root) "config" "PRODUCT_VERSION"))
           name version)
-     (if (file-exists-p product-version-file)
-         (with-current-buffer (get-buffer-create " *product_version*")
-           (erase-buffer)
-           (insert-file-contents product-version-file)
-           (goto-char (point-min))
-           (setq version (current-word)
-                 name    version)))
+     (when (file-exists-p product-version-file)
+       (with-current-buffer (get-buffer-create " *product_version*")
+         (erase-buffer)
+         (insert-file-contents product-version-file)
+         (goto-char (point-min))
+         (setq version (current-word)
+               name    version)))
      (list root
            (read-no-blanks-input "Enter name for this installation: " name)
            (read-no-blanks-input "Enter version number of this installation: " version))))
@@ -316,8 +283,8 @@ installation directory suitable for selection."
 (defun magik-version-file-open ()
   "Open the magik-version-file to edit."
   (interactive
-   (when (not (file-exists-p magik-version-file))
-     (call-interactively 'magik-version-file-create)))
+   (unless (file-exists-p magik-version-file)
+     (call-interactively #'magik-version-file-create)))
   (find-file magik-version-file))
 
 (defun magik-version-file-create ()
@@ -326,18 +293,18 @@ Called if no magik-version program exists or `gis-version-file' is nil.
 Will set `gis-version-file' to FILE."
   (interactive)
   (find-file magik-version-file)
-  (when (not (file-exists-p magik-version-file))
+  (unless (file-exists-p magik-version-file)
     (insert magik-version-file-header)
-    (call-interactively 'magik-version-file-add)
+    (call-interactively #'magik-version-file-add)
     (save-buffer))
   nil)
 
 (defun magik-version-selection ()
   "Display a list of possible gis products for the user to choose between."
   (interactive
-   (when (not (file-exists-p magik-version-file))
-     (call-interactively 'magik-version-file-create)))
-  (set-buffer (get-buffer-create "*gis version selection*"))
+   (unless (file-exists-p magik-version-file)
+     (call-interactively #'magik-version-file-create)))
+  (set-buffer (get-buffer-create "*version selection*"))
   (magik-version-mode)
 
   (setq buffer-read-only nil)
@@ -376,7 +343,7 @@ Will set `gis-version-file' to FILE."
 
   (compat-call setq-local magik-version-position (point))
   (save-match-data
-    (if (search-forward "-------" nil t) (setq magik-version-position (point)))) ;skip a header
+    (when (search-forward "-------" nil t) (setq magik-version-position (point)))) ;skip a header
 
   (setq buffer-read-only t)
   (set-buffer-modified-p nil)
@@ -429,10 +396,12 @@ SELECTED-DEFINITION is the definition using the easy-menu or the current line."
 
 (defun magik-version-at-version-definition ()
   "Return version details if the point is at a version definition.
-The return value is a list (STREAM VERSION SMALLWORLD_GIS), or nil if
-no (valid) match is found."
+ The return value is a list (STREAM VERSION SMALLWORLD_GIS), or nil if
+ no (valid) match is found."
   (if (< (point) magik-version-position)
       (error "No Environment at this point"))
+
+
   (if (save-excursion
         (beginning-of-line)
         (search-forward magik-version-invalid-string (line-end-position) t))
@@ -444,55 +413,6 @@ no (valid) match is found."
         (list (match-string-no-properties 1)
               (match-string-no-properties 2)
               (match-string-no-properties 3))))))
-
-(defun magik-version-call-process-windows (&rest args)
-  "Run Windows command and return the environment variables it sets up."
-  (let ((default-directory temporary-file-directory) ;avoid command shell complaining about cwd being a UNC path
-        (w32-quote-process-args t)   ;ensure quoting of arguments
-        (win32-quote-process-args t));
-    (apply 'call-process args)))
-
-(defun magik-version-call-process-unix (command)
-  "Run unix COMMAND and return the environment variables it sets up."
-  (call-process "/bin/sh" nil t nil "-c"
-                (concat "SHELL=/bin/sh ; export SHELL ; " command " ; env")))
-
-(defun magik-version-prepend-sw-paths (orig new)
-  "Ensure Smallworld directories are prepended to PATH variable.
-For magik-version code to work, the SMALLWORLD paths need to be
-prepended to PATH.
-On UNIX, PATH is modified to have SMALLWORLD appended.
-On Windows it is prepended.
-
-Also sets `gis-version-sw-path-list' to be the list of directories added to PATH
-by the current Smallworld version."
-  (save-match-data
-    (let ((new-list  (delq nil (parse-colon-path new)))
-          (orig-list (delq nil (parse-colon-path orig)))
-          sw-list
-          cnt)
-      ;; Collect new paths added in sw-list
-      (dolist (p new-list)
-        (cond ((not (member p orig-list))
-               (setq sw-list (append sw-list (list p))))
-              ((and (> (setq cnt (cl-count p new-list :test 'equal)) 1)
-                    (not (eq cnt (cl-count p orig-list :test 'equal))))
-               ;;Found mismatching numbers of multiple entries
-               ;;selected version has added more
-               (or (member p sw-list)
-                   (setq sw-list (append sw-list (list p)))))
-              (t
-               nil)))
-      ;;remove previous SW paths using magik-version-sw-list
-      ;;remove new SW paths first then prepend them.
-      (dolist (p (append sw-list magik-version-sw-path-list))
-        (if (member p new-list)
-            (setq new-list (delete p new-list))))
-      (setq magik-version-sw-path-list (cl-copy-list sw-list)
-            new (mapconcat 'directory-file-name
-                           (append sw-list new-list)
-                           path-separator))
-      (subst-char-in-string ?/ ?\\ new))))
 
 (defun magik-version-header-string ()
   "Insert a string describing the gis_version status.

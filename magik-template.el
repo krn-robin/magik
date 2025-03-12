@@ -1,4 +1,4 @@
-;;; magik-template.el --- Provide a simple template file capability for Magik mode
+;;; magik-template.el --- Provide a simple template file capability for Magik mode  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ OPTION   is the string displayed for the user to select the KEY.
 KEY      is the type of template file to use as given in magik-template-alist.")
 
 (defun magik-template-file-type-alist-add (label function options &optional replace-or-append)
-  "Provide interface for adding new magik-template-file-type collections.
+  "Provide interface for adding new `magik-template-file-type' collections.
 A template file may be listed in multiple label groups.
 The FUNCTION modifies `magik-template-file-type-alist' & `magik-template-alist'.
 
@@ -147,7 +147,7 @@ of `magik-template-file-type-alist';
                        `magik-template-file-type-alist'."
 
   ;;Add each template file to the alist of template file names. Avoids duplication
-  (mapc #'(lambda (x) (add-to-list 'magik-template-alist (cons (elt x 0) (elt x 2)))) options)
+  (mapc (lambda (x) (add-to-list 'magik-template-alist (cons (elt x 0) (elt x 2)))) options)
 
   ;;Create main template key if not already there
   (or (assoc label magik-template-file-type-alist)
@@ -159,9 +159,9 @@ of `magik-template-file-type-alist';
          (alist-entry (assoc label magik-template-file-type-alist))
          (choice-list (and (not replace-p)         ;;i.e set to nil if replace.
                            (cddr alist-entry))))
-    (mapc #'(lambda (x) (add-to-list 'choice-list
-                                     (cons (elt x 1) (elt x 0))
-                                     append-p))
+    (mapc (lambda (x) (add-to-list 'choice-list
+                                   (cons (elt x 1) (elt x 0))
+                                   append-p))
           (if append-p
               options
             ;;preserve user supplied order if prepending.
@@ -198,12 +198,11 @@ Use optional DIR to search for the template"
 (defun magik-template-initialise (type)
   "Insert template text from TYPE.
 Only the text in the template starting from a line matching ^# will be inserted."
-  (if type   ;; to strip out the preamble from the template.
-      (progn
+  (when type   ;; to strip out the preamble from the template.
         (goto-char (point-min))
         (or (re-search-forward "^#" nil t)
             (error "The template file, %s, doesn't seem to have column-1 hash, #, character" (magik-template-file type)))
-        (delete-region (point-min) (1- (point)))))
+        (delete-region (point-min) (1- (point))))
   (goto-char (point-max))
   (run-hooks 'magik-template-initialise-hook))
 
@@ -252,7 +251,8 @@ to predefine a template type to use for normal magik files."
                 (erase-buffer)
                 (insert-file-contents template-file)
                 (magik-template-initialise magik-template-file-type)))))))
-(add-hook 'find-file-not-found-hooks 'magik-template-maybe-insert)
+
+(add-hook 'find-file-not-found-hooks #'magik-template-maybe-insert)
 
 ;;Ideally this function would be a bit more intelligent so that it did not require
 ;; modification every time a new template was made and would also reduce the need for
@@ -269,7 +269,7 @@ This hook should come last."
   (if (re-search-forward "^_package " nil t)
       'default))
 
-(add-hook  'magik-template-file-type-hook 'magik-template-file-type-p t)
+(add-hook  'magik-template-file-type-hook #'magik-template-file-type-p t)
 
 ;;;;;;;;;;;;;;;;;;
 ;;Build template structure.

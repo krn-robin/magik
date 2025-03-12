@@ -1,4 +1,4 @@
-;;; magik-session-filter.el --- deal with the output from the magik process.
+;;; magik-session-filter.el --- deal with the output from the magik process.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -39,8 +39,7 @@
   (defvar comint-last-input-end) ;;avoid compiler warning
   (require 'comint))
 
-(require 'magik-mode)
-(require 'magik-session)
+(require 'magik-cb)
 
 (defvar magik-session-filter-state "\C-a"
   "Either \\[move-beginning-of-line], \\[move-end-of-line], \\[forward-char] or \" \".")
@@ -84,7 +83,7 @@ FUNCTION takes one argument, the string after the action character."
                             magik-session-filter-state "\C-a")
                       (message "Error: %s" (error-message-string err)))))))
             ((equal (magik-session-filter-get-state buf) "\C-a")
-             (with-current-buffer buf (magik-session-filter-insert buf proc n str)))
+             (with-current-buffer buf (magik-session-filter-insert proc n str)))
             (t
              nil))
       ;; else if in " " or "\C-f" state then do nothing.
@@ -99,7 +98,7 @@ FUNCTION takes one argument, the string after the action character."
                                   (" " . "\C-a"))))))
             (magik-session-filter proc (substring str (1+ n))))))))
 
-(defun magik-session-filter-insert (buf proc n str)
+(defun magik-session-filter-insert (proc n str)
   "Insert into BUF at the `process-mark' of PROC, N chars from STR.
 If N is nil insert the whole of STR.  We insert before all markers except the
  `comint-last-input-end' and the last command from magik-session-prev-cmds."
@@ -122,16 +121,11 @@ If N is nil insert the whole of STR.  We insert before all markers except the
          (b-pos (marker-position b))
          (e-pos (marker-position e))
          (comint-last-input-end-pos (marker-position comint-last-input-end))
-         (pt (point))
-         ;; BAD!!! (w (get-buffer-window buf))
-         )
+         (pt (point)))
       (insert-before-markers (if n (substring str 0 n) str))
       (set-marker b b-pos)  ;shouldn't really be necessary
       (set-marker e e-pos)
       (set-marker comint-last-input-end comint-last-input-end-pos)
-      ;; BAD!!! (goto-char (window-start w))
-      ;; BAD!!! (beginning-of-line)
-      ;; BAD!!! (set-window-start w (point) t)
       (save-restriction
         (save-match-data
           (narrow-to-region pt (point))
@@ -206,7 +200,7 @@ action's function setting."
 ;;; generic magik-session-filter code ends here.
 
 ;;; Set up filter action functions for the Magik session process
-(defun magik-session-filter-action-completion (proc str)
+(defun magik-session-filter-action-completion (_proc str)
   "Magik sessions Filter Action interface for a Magik symbol completion.
 According to STR returned from Magik."
   (let* ((ans (read str))
@@ -258,7 +252,7 @@ According to the STR returned from Magik."
       (erase-buffer))
     (insert str)))
 
-(defun magik-session-filter-action-find-file (proc str)
+(defun magik-session-filter-action-find-file (_proc str)
   "(Deprecated) Magik session Filter Action interface for `find-file'.
 Find a file and goto a particular line number
 STR is of the form 42:/bla/bla/foo.magik or
@@ -273,7 +267,7 @@ particular line number."
           (goto-char (point-min))
           (forward-line (string-to-number str))))))
 
-(defun magik-session-filter-action-file-open (proc str)
+(defun magik-session-filter-action-file-open (_proc str)
   "Magik session Filter Action interface for opening files in Emacs.
 STR consists of newline separated KEY=VALUE pairs.
 Recognised KEYs are:
@@ -325,11 +319,11 @@ The behaviour is undefined if any search key and line or column are used."
             (forward-line (string-to-number (cdr val)))))
       (if (setq val (assq 'column alist)) (move-to-column (string-to-number (cdr val)))))))
 
-(defun magik-session-filter-action-cb-mf (proc socketname)
+(defun magik-session-filter-action-cb-mf (_proc socketname)
   "Magik has started a method_finder PROC and tell Emacs what the SOCKETNAME is."
   (setq magik-cb--mf-socket-synchronised socketname))
 
-(defun magik-session-filter-action-cb-goto-method (proc str)
+(defun magik-session-filter-action-cb-goto-method (_proc str)
   "Magik session Filter Action interface for cb-goto-method."
   (magik-cb-goto-method str nil))
 

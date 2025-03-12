@@ -167,4 +167,5 @@ If the buffer is not visiting a file, return an empty string."
                                      slots
                                      (number-sequence 0 (1- (length slots)))))
              "\n")))))))
+
 ;;; .yas-setup.el ends here

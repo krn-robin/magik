@@ -1,4 +1,4 @@
-;;; magik-keys.el --- bind all the Magik keys, menus and mouse actions.
+;;; magik-keys.el --- bind all the Magik keys, menus and mouse actions.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -79,9 +79,7 @@
   (global-set-key (kbd "<f3> c")     'magik-cb-paste-class)
   (global-set-key (kbd "<f3> j")     'magik-cb-jump-to-source)
   (global-set-key (kbd "<f3> m")     'magik-cb-paste-method)
-  (global-set-key (kbd "<f3> /")     'magik-cb-and-clear)
-  ;; (global-set-key (kbd "<f3> ?")     'magik-cb-help)
-  )
+  (global-set-key (kbd "<f3> /")     'magik-cb-and-clear))
 
 (provide 'magik-keys)
 ;;; magik-keys.el ends here

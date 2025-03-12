@@ -1,4 +1,4 @@
-;;; magik-product.el --- mode for editing Magik product.def files.
+;;; magik-product.el --- mode for editing Magik product.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -178,7 +178,7 @@ Called by `magik-session-drag-n-drop-load' when a Product FILENAME is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("product.def\\'" . magik-product-mode))
+(add-to-list 'auto-mode-alist '("product\\.def\\'" . magik-product-mode))
 
 (defvar magik-product-f2-map (make-sparse-keymap)
   "Keymap for the F2 function key in Magik product.def buffers.")

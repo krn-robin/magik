@@ -1,4 +1,4 @@
-;;; magik-aliases.el --- mode for editing GIS aliases files.   -*- lexical-binding: t; -*-
+;;; magik-aliases.el --- mode for editing GIS aliases files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,8 +20,10 @@
 ;;; Code:
 
 (eval-when-compile
-  (defvar msb-menu-cond)
-  (require 'magik-utils))
+  (defvar msb-menu-cond))
+
+(require 'magik-session)
+(require 'magik-utils)
 
 (require 'easymenu)
 (require 'compat)
@@ -137,12 +139,6 @@ If any function returns t, then the buffer is displayed."
   :group 'magik-aliases
   :type 'sexp)
 
-(defvar magik-aliases-exec-path nil
-  "Stored variable `exec-path' for executing Magik session command.")
-
-(defvar magik-aliases-process-environment nil
-  "Stored variable `process-environment' for executing Magik session command.")
-
 (defun magik-aliases-customize ()
   "Open Customization buffer for Aliases Mode."
   (interactive)
@@ -166,8 +162,8 @@ You can customise `magik-aliases-mode' with the `magik-aliases-mode-hook'.
                font-lock-defaults '(magik-aliases-font-lock-keywords nil nil))
 
   (add-hook 'read-only-mode-hook #'magik-aliases--update-show-trailing-whitespace nil t)
-  (add-hook 'menu-bar-update-hook 'magik-aliases-update-menu nil t)
-  (add-hook 'kill-buffer-hook 'magik-aliases-kill-buffer nil t))
+  (add-hook 'menu-bar-update-hook #'magik-aliases-update-menu nil t)
+  (add-hook 'kill-buffer-hook #'magik-aliases-kill-buffer nil t))
 
 (defvar magik-aliases-menu nil
   "Menu for Aliases mode.")
@@ -297,9 +293,9 @@ With a prefix arg, ask user for current directory to use."
          (program (magik-aliases-program smallworld-gis))
          (args    magik-aliases-program-args)
          (file    (or file (buffer-file-name)))
-         (buf     "gis")
-         (version (if (boundp 'magik-version-current)
-                      (symbol-value 'magik-version-current))))
+         (buf     "magik")
+         (version (when (boundp 'magik-version-current)
+                    (symbol-value 'magik-version-current))))
     (save-excursion
       (cond (alias nil)
             ((re-search-backward magik-aliases-definition-regexp nil t)
@@ -311,9 +307,9 @@ With a prefix arg, ask user for current directory to use."
           (setq args (append args (list "-e" env-file) nil))))
       (setq args (append args (list "-a" file alias) nil)) ;; alias name MUST be last
 
-      (if (stringp version)
+      (when (stringp version)
           (setq buf (concat buf " " version)))
-      (if alias
+      (when alias
           (setq buf (concat buf " " alias)))
       (setq buf (generate-new-buffer (concat "*" buf "*")))
       (kill-buffer (current-buffer))
@@ -323,7 +319,7 @@ With a prefix arg, ask user for current directory to use."
             default-directory dir
             args (append (list program) args))
       (compat-call setq-local
-                   magik-session-current-command (mapconcat 'identity args " "))
+                   magik-session-current-command (mapconcat #'identity args " "))
       (and (stringp version)
            (boundp 'magik-version-current)
            (set 'magik-version-current version))
@@ -331,8 +327,8 @@ With a prefix arg, ask user for current directory to use."
       (insert (format "Startup time: %s\nCommand: [%s] %s\n" (current-time-string) dir magik-session-current-command))
 
       (magik-session-start-process args))
-    (if (magik-aliases-switch-to-buffer alias)
-        (display-buffer buf))))
+    (when (magik-aliases-switch-to-buffer alias)
+      (pop-to-buffer buf))))
 
 (defun magik-aliases-at-alias-definition ()
   "Return definition, if point is in an alias definition."
@@ -384,22 +380,23 @@ LAYERED_PRODUCTS configuration file."
         (goto-char (point-min))
         (while (re-search-forward "^\\([^\r\n:]+\\):" nil t)
           (setq lp (match-string-no-properties 1))
-          (if (re-search-forward "^\\s-*path\\s-*=\\s-*" nil t)
-              (progn
-                (setq pt (point))
-                (end-of-line)
-                (skip-syntax-backward "-")
-                (skip-chars-backward "/\\") ;avoid trailing directory character.
-                (setq dir (magik-aliases-expand-file (buffer-substring-no-properties pt (point)) smallworld-gis))
-                (when (file-exists-p (file-name-concat dir "config" "gis_aliases"))
-                  (let ((lp-dir (cons lp dir)))
-                    (or (member lp-dir alist) (push lp-dir alist)))))))
+          (when (re-search-forward "^\\s-*path\\s-*=\\s-*" nil t)
+            (setq pt (point))
+            (end-of-line)
+            (skip-syntax-backward "-")
+            (skip-chars-backward "/\\") ;avoid trailing directory character.
+            (setq dir
+                  (magik-aliases-expand-file
+                   (buffer-substring-no-properties pt (point)) smallworld-gis))
+            (when (file-exists-p (file-name-concat dir "config" "gis_aliases"))
+              (let ((lp-dir (cons lp dir)))
+                (or (member lp-dir alist) (push lp-dir alist))))))
         alist))))
 
 (defun magik-aliases-layered-products-acp-path (file smallworld-gis)
   "Read LAYERED_PRODUCTS configuration file using SMALLWORLD-GIS.
 Read contents of FILE using SMALLWORLD-GIS with the format of LAYERED_PRODUCTS
-configuration file and return paths to append to variable `exec-path'."
+configuration file and return paths."
   (when (file-exists-p file)
     (with-current-buffer (get-buffer-create " *aliases LAYERED_PRODUCTS*")
       (insert-file-contents file nil nil nil 'replace)
@@ -489,7 +486,7 @@ If `buffer-read-only' is t, set it to nil (and vice-versa)."
                       (append default-files lp-files buffers rescan))))
 
 ;;; Package initialisation
-(add-hook 'magik-aliases-mode-hook 'magik-aliases-update-sw-menu)
+(add-hook 'magik-aliases-mode-hook #'magik-aliases-update-sw-menu)
 
 (modify-syntax-entry ?_ "w" magik-aliases-mode-syntax-table)
 (modify-syntax-entry ?: "w" magik-aliases-mode-syntax-table)

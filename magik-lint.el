@@ -21,6 +21,10 @@
 
 (require 'flycheck)
 
+(defgroup magik-lint nil
+  "Customise Magik lint group."
+  :group 'magik)
+
 (defun magik-lint--latest-version ()
   "Return latest version of the magik linter."
   (ignore-errors
@@ -84,7 +88,7 @@ See URL `https://github.com/StevenLooman/sonar-magik/tree/master/magik-lint'."
 
 (if (file-exists-p (magik-lint--jar-file))
     (add-to-list 'flycheck-checkers 'magik-lint-java 'append)
-  (warn "magik-lint executable not found: %s; please download from https://github.com/StevenLooman/magik-tools/releases/latest" (magik-lint--jar-file)))
+  (warn "Executable magik-lint not found: %s; please download from https://github.com/StevenLooman/magik-tools/releases/latest" (magik-lint--jar-file)))
 
 (provide 'magik-lint)
 ;;; magik-lint.el ends here
