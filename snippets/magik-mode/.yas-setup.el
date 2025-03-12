@@ -160,7 +160,7 @@ If the buffer is not visiting a file, return an empty string."
                                     (number-sequence 0 (1- (length slots)))))
              "\n")))))))
 
-(defun magik-yasnippet-module-name ()
+(defun magik-yassnippet-module-name ()
   "Recursively search for the module.def and return the module name."
   (when-let* ((module-file (magik-yasnippet--locate-dominating-file "module.def")))
     (magik-yasnippet--first-word-of-file module-file)))
