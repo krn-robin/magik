@@ -1,4 +1,4 @@
-;;; magik-menu.el --- set the Magik menus.
+;;; magik-menu.el --- set the Magik menus.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -56,11 +56,7 @@
     "---"
     [,"Jump to Source"               magik-cb-jump-to-source t]
     "---"
-    [,"Customize"                    magik-cb-customize      t]
-    ;; [,"Help"                         magik-cb-help
-    ;;  :active t
-    ;;  :keys "<f3> ?"]
-    ))
+    [,"Customize"                    magik-cb-customize      t]))
 
 ;;;###autoload
 (defun magik-menu-set-menus ()

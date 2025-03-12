@@ -1,4 +1,4 @@
-;;; magik-pragma.el --- tool for filling in Magik pragma statements.
+;;; magik-pragma.el --- tool for filling in Magik pragma statements.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -389,9 +389,7 @@ the deprecated template."
 
 (defun magik-pragma-if-match-do-the-electric-pragma-topics (current next reverse)
   "Select pragma topics from a menu."
-  (let* ((buffer-dir (if buffer-file-name (file-name-directory buffer-file-name) default-directory))
-         (magik-pragma-files (if buffer-dir (magik-utils-find-files-up buffer-dir "data/doc/pragma_topics")))
-         (product-pragma-file (if (getenv "SMALLWORLD_GIS") (expand-file-name (concat (getenv "SMALLWORLD_GIS") "/data/doc/pragma_topics"))))
+  (let* ((product-pragma-file (if (getenv "SMALLWORLD_GIS") (expand-file-name (concat (getenv "SMALLWORLD_GIS") "/data/doc/pragma_topics"))))
          topics pos)
     (re-search-forward "= *")
     (setq pos (point))
@@ -421,25 +419,26 @@ q      - quit
 
 -----------------------------------------------
 ")
-    (mapc 'insert-file-contents magik-pragma-files)
+    (insert-file-contents (magik-pragma--magik-pragma-file))
     (and product-pragma-file
-         (not (member product-pragma-file magik-pragma-files))
+         (not (string-equal (magik-pragma--magik-pragma-file) product-pragma-file))
          (file-exists-p product-pragma-file)
          (insert-file-contents product-pragma-file))
-    (or magik-pragma-files
+    (or (magik-pragma--magik-pragma-file)
         product-pragma-file
         (error "There is no value for $SMALLWORLD_GIS"))
     (goto-char
      (prog1
          (point)
-       (while (not (eobp))
-         (let ((topic (and (looking-at "\\s-*\\S-+\\s-+\\(\\S-+\\)")
-                           (match-string 1))))
-           (beginning-of-line)
-           (insert (if (assoc topic topics)
-                       "> "
-                     "  "))
-           (forward-line)))))))
+       (prog1 (point)
+         (while (not (eobp))
+           (let ((topic (and (looking-at "\\s-*\\S-+\\s-+\\(\\S-+\\)")
+                             (match-string 1))))
+             (beginning-of-line)
+             (insert (if (assoc topic topics)
+                         "> "
+                       "  "))
+             (forward-line))))))))
 
 (define-derived-mode magik-pragma-topic-select-mode nil "Topic Select"
   "Major mode for selecting topics in pragmas.
@@ -485,7 +484,7 @@ Beep if not looking at \"[ >] (\""
       (when (looking-at ">\\s-*\\S-+\\s-+\\(\\S-+\\)")
         (setq str (concat str (match-string 1) ", ")))
       (forward-line))
-    (when (not (equal str ""))
+    (unless (equal str "")
       (setq str (substring str 0 (- (length str) 2))))
     (kill-buffer (current-buffer))
     (set-window-configuration magik-pragma-window-configuration)
@@ -493,19 +492,25 @@ Beep if not looking at \"[ >] (\""
     (delete-region (point) (progn (search-forward "}") (backward-char) (point)))
     (insert str)))
 
+(defun magik-pragma--magik-pragma-file ()
+  "Locate the pragma_topics file."
+  (let* ((pt "data/doc/pragma_topics")
+         (buffer-dir (if buffer-file-name (file-name-directory buffer-file-name) default-directory))
+         (magik-pragma-file (when buffer-dir (expand-file-name pt (locate-dominating-file buffer-dir pt)))))
+    magik-pragma-file))
+
 (defun magik-pragma-topic-edit ()
   "Edit the topics file for the Smallworld Product \".../data/doc/pragma_topics\"."
   (interactive)
-  (let* ((buffer-dir (if buffer-file-name (file-name-directory buffer-file-name) default-directory))
-         (magik-pragma-file (if buffer-dir (magik-utils-find-files-up buffer-dir "data/doc/pragma_topics" t))))
-    (cond (magik-pragma-file
-           (find-file (car magik-pragma-file)))
-          ((getenv "SMALLWORLD_GIS")
-           (find-file
-            (concat (file-name-as-directory (getenv "SMALLWORLD_GIS"))
-                    "data/doc/pragma_topics")))
-          (t
-           (error "There is no value for $SMALLWORLD_GIS")))))
+  (cond ((magik-pragma--magik-pragma-file)
+         (find-file (magik-pragma--magik-pragma-file)))
+        ((getenv "SMALLWORLD_GIS")
+         (find-file
+          (concat (file-name-as-directory (getenv "SMALLWORLD_GIS"))
+                  "data/doc/pragma_topics")))
+        (t
+         (error "There is no value for $SMALLWORLD_GIS"))))
+
 
 (progn
   ;; ------------------------ magik pragma topic select mode ------------------------

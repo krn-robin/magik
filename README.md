@@ -63,7 +63,7 @@ Major prog mode for editing Magik code.
 
 Support for outline-minor mode. Try: `(outline-minor-mode)`
 
-Support for imenu. Try: `(add-hook 'magik-mode-hook 'imenu-add-menubar-index)`
+Support for imenu. Try: `(add-hook 'magik-mode-hook #'imenu-add-menubar-index)`
 
 ### magik-electric-mode
 
