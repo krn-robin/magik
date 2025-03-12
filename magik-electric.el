@@ -102,7 +102,6 @@
   "Toggle the electric switch."
   :init-value t
   (message "Electric Magik %s" (if magik-electric-mode "on" "off")))
-(defalias 'magik-electric-toggle 'magik-electric-mode) ;compatibility
 
 (defun magik-electric-hash (char)
   "Insert the CHAR, '#'.
@@ -258,8 +257,7 @@ If it's the first '#' and the previous line starts with '#', align with it."
             (save-excursion
               (and (string-match "classify_level=deprecated" str) ;Was it deprecated?
                    (goto-char pt)                                 ;place point ready to insert deprecated template
-                   (magik-pragma-insert-deprecated-template)      ;because this fn assumes that it is on the pragma line
-                   )))
+                   (magik-pragma-insert-deprecated-template))))   ;because this fn assumes that it is on the pragma line
         (let ((str (if (> (length line) 1)
                        (cadr line)
                      magik-electric-default-pragma)))
