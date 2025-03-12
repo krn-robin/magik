@@ -1,4 +1,4 @@
-;;; magik-cb.el --- Class Browser for Magik methods and classes.
+;;; magik-cb.el --- Class Browser for Magik methods and classes.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -82,6 +82,7 @@
 (eval-when-compile
   (defvar msb-menu-cond))
 
+(require 'magik-aliases)
 (require 'magik-mode)
 (require 'magik-session)
 (require 'magik-utils)
@@ -154,16 +155,16 @@
      (2 'magik-cb-class-face))
     ("^\\(\\S-+\\)$" . 'magik-cb-method-face)
     ("^\\s-+\\(.*?\\)\\(OPT\\(?:.*?\\)\\)\\(GATH.*\\)"
-     (1 'magik-cb-parameters-face)
-     (2 'magik-cb-optional-parameters-face)
-     (3 'magik-cb-gather-parameters-face))
+     (1 'magik-variable-face)
+     (2 'magik-cb-optional-face)
+     (3 'magik-cb-gather-face))
     ("^\\s-+\\(.*\\)\\(GATH.*\\)"
-     (1 'magik-cb-parameters-face)
-     (2 'magik-cb-gather-parameters-face))
+     (1 'magik-variable-face)
+     (2 'magik-cb-gather-face))
     ("^\\s-+\\(.*?\\)\\(OPT.*\\)"
-     (1 'magik-cb-parameters-face)
-     (2 'magik-cb-optional-parameters-face))
-    ("^\\s-+.*$" . 'magik-cb-parameters-face))
+     (1 'magik-variable-face)
+     (2 'magik-cb-optional-face))
+    ("^\\s-+.*$" . 'magik-variable-face))
   "*Font lock setting for Class Browser fontification."
   :group 'magik-cb
   :type  'sexp)
@@ -395,7 +396,7 @@ Do a no-op if already in the cb.
 
 Set METHOD and CLASS if given."
   (interactive)
-  (let (magik-cb-file running-p buffer gis-proc visible-bufs bufs smallworld-gis)
+  (let (magik-cb-file buffer visible-bufs bufs smallworld-gis)
     (cond ((and (integerp current-prefix-arg)
                 (> current-prefix-arg 0))
            (setq gis (magik-utils-get-buffer-mode gis
@@ -492,29 +493,22 @@ Set METHOD and CLASS if given."
     (setq buffer (or buffer (concat "*cb*" gis))
           smallworld-gis (cond
                           (gis (buffer-local-value 'magik-smallworld-gis (get-buffer gis)))
-                          (buffer (buffer-local-value 'magik-smallworld-gis (get-buffer buffer))))
-          gis-proc (and gis (get-buffer-process gis)))
+                          (buffer (buffer-local-value 'magik-smallworld-gis (get-buffer buffer)))))
 
     (cond ((magik-cb-is-running buffer)
-           (setq running-p t)
            (compat-call setq-local magik-cb-process (get-buffer-process buffer)))
-          ((and magik-cb-dynamic gis-proc)
-           (setq buffer (get-buffer-create buffer)))
-          (t
-           (setq gis-proc nil)))
+          ((and gis (get-buffer-process gis))
+           (setq buffer (get-buffer-create buffer))))
     (pop-to-buffer buffer)
     (with-current-buffer buffer
+      (compat-call setq-local
+                   magik-cb-process (magik-cb-get-process-create buffer 'magik-cb-filter smallworld-gis gis magik-cb-file)
+                   magik-smallworld-gis smallworld-gis)
+      (magik-cb-interactive-buffer)
+      (sleep-for 0.1)
 
-      (if (not running-p)
-          (progn
-            (compat-call setq-local
-                         magik-cb-process (magik-cb-get-process-create buffer 'magik-cb-filter smallworld-gis gis magik-cb-file)
-                         magik-smallworld-gis smallworld-gis)
-            (magik-cb-interactive-buffer)
-            (sleep-for 0.1)))
-
-      (if (not magik-cb-process)
-          (error "The Class Browser, '%s', is not running" (current-buffer)))
+      (unless magik-cb-process
+        (error "The Class Browser, '%s', is not running" (current-buffer)))
 
       (if (magik-cb-set-method-and-class method class)
           (magik-cb-send-modeline-and-pr)
@@ -526,7 +520,7 @@ Set METHOD and CLASS if given."
   "Start a new Class Browser session."
   (interactive)
   (let ((current-prefix-arg t))
-    (call-interactively 'magik-cb)))
+    (call-interactively #'magik-cb)))
 
 (define-derived-mode magik-cb-mode magik-base-mode "Magik-CB"
   "Major mode for running the Smallworld Class Browser.
@@ -558,8 +552,8 @@ To view the help on these variables type \\[describe-variable] and enter the var
                magik-cb-cursor-pos 'method-name
                magik-cb-pending-message t)
 
-  (add-hook 'menu-bar-update-hook 'magik-cb-update-tools-magik-cb-menu nil t)
-  (add-hook 'kill-buffer-hook 'magik-cb-buffer-alist-remove nil t)
+  (add-hook 'menu-bar-update-hook #'magik-cb-update-tools-magik-cb-menu nil t)
+  (add-hook 'kill-buffer-hook #'magik-cb-buffer-alist-remove nil t)
 
   (magik-cb-reset))
 
@@ -610,9 +604,7 @@ To view the help on these variables type \\[describe-variable] and enter the var
     [,"Magik External Shell Process"   magik-cb-gis-shell             (get-buffer
                                                                        (concat "*shell*" (magik-cb-gis-buffer)))]
     "---"
-    [,"Customize"                      magik-cb-customize             t]
-    ;; [,"Help"                           magik-cb-help                  t]
-    ))
+    [,"Customize"                      magik-cb-customize             t]))
 
 (defun magik-cb-gis-buffer (&optional buffer)
   "Return the Magik session process BUFFER associated with this Class Browser."
@@ -676,11 +668,11 @@ If `cb-process' is not nil, returns that irrespective of given BUFFER."
 (defun magik-cb-update-tools-magik-cb-menu ()
   "Update Class Browser Processes submenu in Tools -> Magik pulldown menu."
   (let ((magik-cb-gis-alist (sort (copy-alist (symbol-value 'magik-session-buffer-alist))
-                                  #'(lambda (a b) (< (car a) (car b))))); 1, 2 etc.
+                                  (lambda (a b) (< (car a) (car b))))); 1, 2 etc.
         (magik-cb-alist     (sort (copy-alist magik-cb-buffer-alist); -1, -2, etc.
-                                  #'(lambda (a b) (> (car a) (car b)))))
+                                  (lambda (a b) (> (car a) (car b)))))
         cb-list)
-    ;; Order is such that CB of *gis* will be first see magik-session.el for more details.
+    ;; Order is such that CB of `magik-session-buffer-default-name' will be first see magik-session.el for more details.
     (dolist (c magik-cb-alist)
       (let ((i   (- (car c)))
             (buf (cdr c)))
@@ -750,15 +742,15 @@ If `cb-process' is not nil, returns that irrespective of given BUFFER."
   "Start a COMMAND process in BUFFER using SMALLWORLD-GIS.
 Returns process object.
 BUFFER may be nil, in which case only the process is started."
-  (let* ((program (magik-cb--executable-find command smallworld-gis)))
-    (unless program
-      (error "The '%s' executable couldn't be found" command))
-    (compat-call setq-local magik-cb-process (apply 'start-process "cb" buffer program args))
-    (set-process-filter        magik-cb-process 'magik-cb-filter)
-    (set-process-sentinel      magik-cb-process 'magik-cb-sentinel)
-    (set-process-coding-system magik-cb-process magik-cb-coding-system magik-cb-coding-system)
-    (magik-cb-send-tmp-file-name (magik-cb-temp-file-name magik-cb-process))
-    magik-cb-process))
+  (if-let* ((program (magik-cb--executable-find command smallworld-gis)))
+      (progn
+        (compat-call setq-local magik-cb-process (apply 'start-process "cb" buffer program args))
+        (set-process-filter        magik-cb-process 'magik-cb-filter)
+        (set-process-sentinel      magik-cb-process 'magik-cb-sentinel)
+        (set-process-coding-system magik-cb-process magik-cb-coding-system magik-cb-coding-system)
+        (magik-cb-send-tmp-file-name (magik-cb-temp-file-name magik-cb-process))
+        magik-cb-process)
+    (error "The '%s' executable couldn't be found" command)))
 
 (defun magik-cb-get-process-create (buffer filter smallworld-gis &optional gis cb-file)
   "Return a method finder process in BUFFER using SMALLWORLD-GIS.
@@ -778,13 +770,13 @@ If FILTER is given then it is set on the process."
              (let ((socketname (magik-cb-gis-get-mf-socketname gis-proc)))
                (if socketname
                    (compat-call setq-local magik-cb-process (magik-cb-start-process buffer smallworld-gis "mf_connector" "-e" socketname))
-                 (if buffer
-                     (with-current-buffer buffer
-                       (let ((buffer-read-only nil))
-                         (goto-char (point-max))
-                         (insert "\n\n*** Can't start the Class Browser. ***\n The Magik session hasn't started a method_finder.\n Perhaps there was no '.mf' file next to your image file.\n")
-                         (ding) (ding) (ding)
-                         (error "Can't start CB using mf_connector")))))))
+                 (when buffer
+                   (with-current-buffer buffer
+                     (let ((buffer-read-only nil))
+                       (goto-char (point-max))
+                       (insert "\n\n*** Can't start the Class Browser. ***\n The Magik session hasn't started a method_finder.\n Perhaps there was no '.mf' file next to your image file.\n")
+                       (ding) (ding) (ding)
+                       (error "Can't start CB using mf_connector")))))))
             (cb-file
              ;; otherwise start our own method_finder.
              (compat-call setq-local magik-cb-process (magik-cb-start-process buffer
@@ -914,7 +906,6 @@ If FILTER is given then it is set on the process."
         (compat-call setq-local magik-cb-filter-str (if (string-match "[\C-t\C-f]" magik-cb-filter-str)
                                                         (substring magik-cb-filter-str (match-beginning 0))
                                                       ""))
-
         (when jump-str
           (magik-cb-goto-method jump-str (derived-mode-p 'magik-cb-mode)))))))
 
@@ -1005,8 +996,7 @@ separated by spaces."
                 class))))
          (method-name (cadr lis))
          (filename    (magik-cb-generalise-file-name
-                       (mapconcat 'identity (reverse (cddr lis)) " ")))
-         search-str)
+                       (mapconcat #'identity (reverse (cddr lis)) " "))))
     (cond ((file-readable-p filename)
            t)
           ((string-match "[/\\]source[/\\]sys_core[/\\]" filename)
@@ -1335,8 +1325,8 @@ Don't ask for a response, though."
     (when (and (get-buffer cb2) (eq magik-cb2-mode 'topic))
       (let ((on-p (magik-cb-topic-on-p str))
             (term-p (member str magik-cb-thermometer-group))
-            buffer-read-only
-            case-fold-search)
+            (buffer-read-only nil)
+            (case-fold-search nil))
         (set-buffer cb2)
         (goto-char (point-min))
         (search-forward (concat " " str " "))
@@ -2134,7 +2124,6 @@ Defined in `magik-cb-current-jump'."
     (setq magik-cb-temp-method-name (magik-cb-curr-method-name))
     (magik-cb nil magik-cb-temp-method-name "")))
 
-
 ;; U T I L S
 ;; _________
 
@@ -2198,11 +2187,11 @@ compression or lazy re-draw or something."
 ;; through here, so that we can do diagnostics like this:
 ;;
 ;; (defun magik-cb-send-string (&rest strings)
-;;   (process-send-string magik-cb-process (apply 'concat strings))
+;;   (process-send-string magik-cb-process (apply #'concat strings))
 ;;   (save-excursion
 ;;     (set-buffer (get-buffer-create "cb_diag"))
 ;;     (goto-char (point-max))
-;;     (apply 'insert strings)))
+;;     (apply #'insert strings)))
 
 ;; we put a delay in here for hps because they seem to
 ;; lose data if you send it too fast.  Not any more because
@@ -2212,7 +2201,7 @@ compression or lazy re-draw or something."
 
 (defun magik-cb-send-string (&rest strings)
   "Send the STRINGS to the cb process."
-  (process-send-string (magik-cb-process) (apply 'concat strings)))
+  (process-send-string (magik-cb-process) (apply #'concat strings)))
 
 (defun magik-cb-find-latest-<= (target-str beg end)
   "Return the start position of the latest line in TARGET-STR from BEG to END."
@@ -2279,6 +2268,17 @@ Cut out trailing comments etc."
 
 (defun magik-cb-class-str ()
   (save-excursion (magik-cb-set-buffer-c) (buffer-string)))
+
+(defun magik-cb-method-finder-version (smallworld-gis)
+  "Return as a string the version of the method_finder using SMALLWORLD-GIS."
+  (let ((program (magik-cb--executable-find "method_finder" smallworld-gis)))
+    (with-current-buffer (get-buffer-create " *method finder version*")
+      (erase-buffer)
+      (call-process program nil t nil "-v")
+      (goto-char (point-min))
+      (if (re-search-forward "[0-9.]+" nil t)
+          (buffer-substring (match-beginning 0) (match-end 0))
+        (error "Using call-process on the method_finder failed")))))
 
 (defun magik-cb-temp-file-name (p)
   "The filename the method_finder uses to pass data back to the class browser."

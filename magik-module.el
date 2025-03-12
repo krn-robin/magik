@@ -1,4 +1,4 @@
-;;; magik-module.el --- mode for editing Magik module.def files.
+;;; magik-module.el --- mode for editing Magik module.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -314,7 +314,7 @@ Called by `magik-session-drag-n-drop-load' when a Module FILENAME is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("module.def\\'" . magik-module-mode))
+(add-to-list 'auto-mode-alist '("module\\.def\\'" . magik-module-mode))
 
 (defvar magik-module-f2-map (make-sparse-keymap)
   "Keymap for the F2 function key in Magik module.def buffers.")

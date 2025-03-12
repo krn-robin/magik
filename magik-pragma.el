@@ -1,4 +1,4 @@
-;;; magik-pragma.el --- tool for filling in Magik pragma statements.
+;;; magik-pragma.el --- tool for filling in Magik pragma statements.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -434,9 +434,9 @@ q      - quit
 
 -----------------------------------------------
 ")
-    (mapc 'insert-file-contents magik-pragma-files)
+    (insert-file-contents (magik-pragma--magik-pragma-file))
     (and product-pragma-file
-         (not (member product-pragma-file magik-pragma-files))
+         (not (string-equal (magik-pragma--magik-pragma-file) product-pragma-file))
          (file-exists-p product-pragma-file)
          (insert-file-contents product-pragma-file))
 
@@ -497,13 +497,20 @@ Beep if not looking at \"[ >] (\""
       (when (looking-at ">\\s-*\\S-+\\s-+\\(\\S-+\\)")
         (setq str (concat str (match-string 1) ", ")))
       (forward-line))
-    (when (not (equal str ""))
+    (unless (equal str "")
       (setq str (substring str 0 (- (length str) 2))))
     (kill-buffer (current-buffer))
     (set-window-configuration magik-pragma-window-configuration)
     (forward-char)
     (delete-region (point) (progn (search-forward "}") (backward-char) (point)))
     (insert str)))
+
+(defun magik-pragma--magik-pragma-file ()
+  "Locate the pragma_topics file."
+  (let* ((pt "data/doc/pragma_topics")
+         (buffer-dir (if buffer-file-name (file-name-directory buffer-file-name) default-directory))
+         (magik-pragma-file (when buffer-dir (expand-file-name pt (locate-dominating-file buffer-dir pt)))))
+    magik-pragma-file))
 
 (defun magik-pragma-topic-edit ()
   "Edit the pragma_topics file."

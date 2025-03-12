@@ -1,4 +1,4 @@
-;;; magik-utils.el --- programming utils for the Magik lisp.
+;;; magik-utils.el --- programming utils for the Magik lisp.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -41,34 +41,6 @@ Use BUFFER as `magik-session-buffer'."
         process (or process (get-buffer-process buffer)))
   (or process
       (error "There is no Magik Session running in buffer '%s'" buffer)))
-
-(defun gsub (str from to)
-  "Return a STR with any matches for the regexp, FROM, replaced by TO."
-  (save-match-data
-    (prog1
-        (if (string-match from str)
-            (concat (substring str 0 (match-beginning 0))
-                    to
-                    (gsub (substring str (match-end 0)) from to))
-          str))))
-
-(defun sub (str from to)
-  "Return a STR with the first match for the regexp, FROM, replaced by TO."
-  (save-match-data
-    (prog1
-        (if (string-match from str)
-            (concat (substring str 0 (match-beginning 0))
-                    to
-                    (substring str (match-end 0)))
-          str))))
-
-(defun global-replace-regexp (regexp to-string)
-  "Replace REGEXP with TO-STRING globally."
-  (save-match-data
-    (goto-char (point-min))
-    (while
-        (re-search-forward regexp nil t)
-      (replace-match to-string nil nil))))
 
 (defun magik-utils-locate-all-dominating-file (path file-name)
   "Find all ancestor paths of PATH containing FILE-NAME.
@@ -190,15 +162,15 @@ Retaining head and tail portions of path."
       (push (pop components) tail)
       (push (pop components) tail)
       (push (pop components) tail)
-      (setq maxlen (- maxlen (apply '+ (mapcar 'length tail)) (length tail) (length sep))
+      (setq maxlen (- maxlen (apply #'+ (mapcar #'length tail)) (length tail) (length sep))
             components (reverse components))
       ;;now collect as many parts of the top of the path that we can.
-      (while (and (setq c (car components)) (< (apply '+ (mapcar 'length head))
+      (while (and (setq c (car components)) (< (apply #'+ (mapcar #'length head))
                                                (- maxlen (length head) (length c))))
         (push c head)
         (setq components (cdr components)))
 
-      (mapconcat 'identity (append (reverse head) (list sep) tail) dirsep))))
+      (mapconcat #'identity (append (reverse head) (list sep) tail) dirsep))))
 
 (defun magik-utils-buffer-mode-list-predicate-p (predicate)
   "Return t if PREDICATE function or variable is true or PREDICATE is nil."
@@ -264,31 +236,31 @@ Used for determining a suitable BUFFER using the following interface:
 6. Use DEFAULT value, or PROMPT if `magik-utils-by-default-prompt-buffer-p'
    is not nil."
   (let* ((prefix-fn (or prefix-fn
-                        #'(lambda (arg mode predicate)
-                            (nth (1- arg)
-                                 (reverse (magik-utils-buffer-mode-list-sorted mode predicate))))))
+                        (lambda (arg mode predicate)
+                          (nth (1- arg)
+                               (reverse (magik-utils-buffer-mode-list-sorted mode predicate))))))
          (predicate (or predicate
-                        #'(lambda ()
-                            "This assumes buffer is set by `magik-utils-buffer-mode-list'"
-                            (get-buffer-process (current-buffer)))))
+                        (lambda ()
+                          "This assumes buffer is set by `magik-utils-buffer-mode-list'"
+                          (get-buffer-process (current-buffer)))))
          (prompt (concat prompt " "))
          (visible-buffs (magik-utils-buffer-visible-list mode predicate))
          (prompt-when-multiple-options
-          #'(lambda (buffers)
-              (and buffers
-                   (setq buffer
-                         (if (length= buffers 1) (car buffers)
-                           (completing-read prompt buffers nil t initial)))
-                   (not (equal buffer ""))
-                   buffer))))
+          (lambda (buffers)
+            (and buffers
+                 (setq buffer
+                       (if (length= buffers 1) (car buffers)
+                         (completing-read prompt buffers nil t initial)))
+                 (not (equal buffer ""))
+                 buffer))))
     (cond ((integerp current-prefix-arg) (funcall prefix-fn current-prefix-arg mode predicate))
           (current-prefix-arg (funcall prompt-when-multiple-options (magik-utils-buffer-mode-list mode predicate)))
           (buffer buffer)
-          ((funcall prompt-when-multiple-options (seq-reduce #'(lambda (buffers buff)
-                                                                 (if (cdr buff) (cons (car buff) buffers)))
+          ((funcall prompt-when-multiple-options (seq-reduce (lambda (buffers buff)
+                                                               (if (cdr buff) (cons (car buff) buffers)))
                                                              visible-buffs nil))
            buffer)
-          ((funcall prompt-when-multiple-options (mapcar 'car visible-buffs))
+          ((funcall prompt-when-multiple-options (mapcar #'car visible-buffs))
            (select-frame-set-input-focus
             (window-frame (get-buffer-window buffer 'visible)))
            buffer)
