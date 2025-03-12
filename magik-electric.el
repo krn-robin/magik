@@ -107,8 +107,6 @@
 (magik-electric-mode (or (bound-and-true-p magik-electric-mode)
                          (not (boundp 'magik-electric-mode))))
 
-(defalias 'magik-electric-toggle 'magik-electric-mode) ;compatibility
-
 (defun magik-electric-hash (char)
   "Insert the CHAR, '#'.
 If it's the first '#' and the previous line starts with '#', align with it."
@@ -263,8 +261,7 @@ If it's the first '#' and the previous line starts with '#', align with it."
             (save-excursion
               (and (string-match "classify_level=deprecated" str) ;Was it deprecated?
                    (goto-char pt)                                 ;place point ready to insert deprecated template
-                   (magik-pragma-insert-deprecated-template)      ;because this fn assumes that it is on the pragma line
-                   )))
+                   (magik-pragma-insert-deprecated-template))))   ;because this fn assumes that it is on the pragma line
         (let ((str (if (> (length line) 1)
                        (cadr line)
                      magik-electric-default-pragma)))
