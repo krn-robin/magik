@@ -1,4 +1,4 @@
-;;; magik-msg.el --- mode for editing Magik msg and hmsg Message files.
+;;; magik-msg.el --- mode for editing Magik msg and hmsg Message files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 (eval-when-compile
   (require 'easymenu)
   (require 'font-lock)
+  (require 'speedbar)
   (defvar msb-menu-cond)
 
   (require 'magik-utils)
@@ -54,8 +55,7 @@ See `imenu-generic-expression'.")
    '("^:\\sw*\\(\\s$\\S$*\\s$\\sw*\\)?" . font-lock-function-name-face)
    '("^#%\\s-*text_encoding.*$" . font-lock-warning-face)
    '("#[0-9]+" . font-lock-variable-name-face)
-   '("#.*" . font-lock-comment-face)
-   )
+   '("#.*" . font-lock-comment-face))
   "Default fontification of Magik Messages."
   :group 'msg
   :type 'sexp)
@@ -63,7 +63,7 @@ See `imenu-generic-expression'.")
 (defun magik-msg-customize ()
   "Open Customization buffer for Msg Mode."
   (interactive)
-  (customize-group 'msg))
+  (customize-group 'magik-msg))
 
 (defun magik-msg-forward-message ()
   "Put point at beginning of line of next message."
@@ -145,11 +145,11 @@ the variable `magik-session-buffer'."
      process
      (format
       "_proc(file)
-	 message_handler.compile_message_file(file)
-	 _local message_handler_name << system.split_filename(system.pathname_components(file))
-	 _if message_handler_name _isnt _unset
-	 _then sw:message_handler.new(message_handler_name).load_message_file(file)
-	 _endif
+  message_handler.compile_message_file(file)
+  _local message_handler_name << system.split_filename(system.pathname_components(file))
+  _if message_handler_name _isnt _unset
+  _then sw:message_handler.new(message_handler_name).load_message_file(file)
+  _endif
       _endproc(%S)\n$\n"
       filename))
     gis))
@@ -210,10 +210,8 @@ Called by `magik-session-drag-n-drop-load' when a Msg FILENAME is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(or (assoc "\\.msg$" auto-mode-alist)
-    (push '("\\.msg$" . magik-msg-mode) auto-mode-alist))
-(or (assoc "\\.hmsg$" auto-mode-alist)
-    (push '("\\.hmsg$" . magik-msg-mode) auto-mode-alist))
+(add-to-list 'auto-mode-alist '("\\.msg\\'" . magik-msg-mode))
+(add-to-list 'auto-mode-alist '("\\.hmsg\\'" . magik-msg-mode))
 
 ;; speedbar configuration
 (with-eval-after-load 'speedbar
@@ -229,7 +227,7 @@ Called by `magik-session-drag-n-drop-load' when a Msg FILENAME is dropped."
          (handle (1- (nth 1 last))))
     (setcdr precdr (list
                     (list
-                     '(eq major-mode 'magik-msg-mode)
+                     '(derived-mode-p 'magik-msg-mode)
                      handle
                      "Msg Files (%d)")
                     last))))

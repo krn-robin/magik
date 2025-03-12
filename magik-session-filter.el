@@ -1,4 +1,4 @@
-;;; magik-session-filter.el --- deal with the output from the magik process.
+;;; magik-session-filter.el --- deal with the output from the magik process.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@
 
 (require 'magik-mode)
 (require 'magik-session)
+(require 'magik-utils)
 
 (defvar magik-session-filter-state "\C-a"
   "Either \"\\C-a\", \"\\C-e\, \"\\C-f\" or \" \".")
@@ -122,16 +123,11 @@ If N is nil insert the whole of STR.  We insert before all markers except the
          (b-pos (marker-position b))
          (e-pos (marker-position e))
          (comint-last-input-end-pos (marker-position comint-last-input-end))
-         (pt (point))
-         ;; BAD!!! (w (get-buffer-window buf))
-         )
+         (pt (point)))
       (insert-before-markers (if n (substring str 0 n) str))
       (set-marker b b-pos)  ;shouldn't really be necessary
       (set-marker e e-pos)
       (set-marker comint-last-input-end comint-last-input-end-pos)
-      ;; BAD!!! (goto-char (window-start w))
-      ;; BAD!!! (beginning-of-line)
-      ;; BAD!!! (set-window-start w (point) t)
       (save-restriction
         (save-match-data
           (narrow-to-region pt (point))

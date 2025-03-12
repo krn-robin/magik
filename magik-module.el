@@ -1,4 +1,4 @@
-;;; magik-module.el --- mode for editing Magik module.def files.
+;;; magik-module.el --- mode for editing Magik module.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -61,8 +61,7 @@ See `imenu-generic-expression'.")
    '("^\\(\\sw+\\)\\s-*$" . font-lock-variable-name-face)
    '("^\\(\\sw+\\s-*\\sw*\\)\\s-*\\([0-9]*\\s-*[0-9]*\\)"
      (1 font-lock-function-name-face)
-     (2 font-lock-constant-face))
-   )
+     (2 font-lock-constant-face)))
   "Default fontification of module.def files."
   :group 'module
   :type 'sexp)
@@ -155,8 +154,7 @@ See `imenu-generic-expression'.")
    '("^\\(\\sw+\\)\\s-*$" . font-lock-variable-name-face)
    '("^\\(\\sw+\\s-*\\sw*\\)\\s-*\\([0-9]*\\s-*[0-9]*\\)"
      (1 font-lock-function-name-face)
-     (2 font-lock-constant-face))
-   )
+     (2 font-lock-constant-face)))
   "Default fontification of module.def files."
   :group 'module
   :type 'sexp)
@@ -309,8 +307,7 @@ Called by `magik-session-drag-n-drop-load' when a Module FILENAME is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(or (assoc "module\\.def$" auto-mode-alist)
-    (push '("module\\.def$" . magik-module-mode) auto-mode-alist))
+(add-to-list 'auto-mode-alist '("module\\.def\\'" . magik-module-mode))
 
 (defvar magik-module-f2-map (make-sparse-keymap)
   "Keymap for the F2 function key in Magik module.def buffers.")

@@ -1,4 +1,4 @@
-;;; magik-product.el --- mode for editing Magik product.def files.
+;;; magik-product.el --- mode for editing Magik product.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -49,8 +49,7 @@ See `imenu-generic-expression'.")
    '("^\\(\\sw+\\)\\s-*$" . font-lock-variable-name-face)
    '("^\\(\\sw+\\s-*\\sw*\\)\\s-*\\([0-9]*\\s-*[0-9]*\\)"
      (1 font-lock-function-name-face)
-     (2 font-lock-constant-face))
-   )
+     (2 font-lock-constant-face)))
   "Default fontification of product.def files."
   :group 'product
   :type 'sexp)
@@ -58,7 +57,7 @@ See `imenu-generic-expression'.")
 (defun magik-product-customize ()
   "Open Customization buffer for Product Mode."
   (interactive)
-  (customize-group 'product))
+  (customize-group 'magik-product))
 
 ;;;###autoload
 (define-derived-mode magik-product-mode nil "Product"
@@ -151,8 +150,7 @@ Called by `magik-session-drag-n-drop-load' when a Product FILENAME is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(or (assoc "product\\.def$" auto-mode-alist)
-    (push '("product\\.def$" . magik-product-mode) auto-mode-alist))
+(add-to-list 'auto-mode-alist '("product\\.def\\'" . magik-product-mode))
 
 (defvar magik-product-f2-map (make-sparse-keymap)
   "Keymap for the F2 function key in Magik product.def buffers.")

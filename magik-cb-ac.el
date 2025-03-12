@@ -1,4 +1,4 @@
-;;; magik-cb-ac.el --- Magik Classbrowser Autocomplete Support
+;;; magik-cb-ac.el --- Magik Classbrowser Autocomplete Support  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 ;;; Code:
 
 (require 'auto-complete)
+(eval-when-compile
+  (require 'magik-cb))
 
 ;; A U T O - C O M P L E T E
 ;; _________________________
@@ -172,7 +174,7 @@ Stores process object in `magik-cb-ac-process'."
                     "\n"))
            ((equal class "<global>")
             ;; Globals are either procedures with arguments or dynamics.
-            (let* ((args-string (mapconcat 'identity (append required optional gather) ", "))
+            (let* ((args-string (mapconcat #'identity (append required optional gather) ", "))
                    (argsp (not (equal args-string ""))))
               (concat method
                       (if argsp "(")
@@ -187,7 +189,7 @@ Stores process object in `magik-cb-ac-process'."
                     "  " classify
                     "\n"))
            ((equal (substring signature 0 1) "(")
-            (let ((args-string (mapconcat 'identity (append required optional gather) ", ")))
+            (let ((args-string (mapconcat #'identity (append required optional gather) ", ")))
               (concat method "("
                       args-string
                       (substring signature 1) ;; appends rest of signature. ), )<< and )^<<
