@@ -21,6 +21,10 @@
 
 (require 'flycheck)
 
+(defgroup magik-lint nil
+  "Customise Magik lint group."
+  :group 'magik)
+
 (defun magik-lint--latest-version ()
   "Return latest version of the magik linter."
   (ignore-errors
