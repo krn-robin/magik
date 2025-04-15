@@ -141,9 +141,9 @@ that use command string matching are not affected by this setting."
   :group 'magik-session)
 
 (defface magik-session-error-face
- '((t :inherit magik-warning-face))
- "Font Lock mode face used to display Error lines."
- :group 'magik-session-faces)
+  '((t :inherit magik-warning-face))
+  "Font Lock mode face used to display Error lines."
+  :group 'magik-session-faces)
 
 (defface magik-session-prompt-face
   '((t :inherit magik-warning-face))
@@ -161,9 +161,9 @@ that use command string matching are not affected by this setting."
   :group 'magik-session-faces)
 
 (defface magik-session-warning-face
- '((t :inherit magik-warning-face))
- "Font Lock mode face used to display Error lines."
- :group 'magik-session-faces)
+  '((t :inherit magik-warning-face))
+  "Font Lock mode face used to display Error lines."
+  :group 'magik-session-faces)
 
 (defcustom magik-session-font-lock-keywords
   (append
