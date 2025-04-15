@@ -134,14 +134,14 @@
      (1 'magik-cb-method-face)
      (2 'magik-cb-class-face))
     ("^\\(\\S-+\\)$" . 'magik-cb-method-face)
-    ("^\\s-+\\(.*\\)\\(OPT.+\\)\\(GATH.+\\)"
+    ("^\\s-+\\(.*?\\)\\(OPT\\(?:.*?\\)\\)\\(GATH.*\\)"
      (1 'magik-variable-face)
      (2 'magik-cb-optional-face)
      (3 'magik-cb-gather-face))
-    ("^\\s-+\\(.*\\)\\(GATH.+\\)"
+    ("^\\s-+\\(.*\\)\\(GATH.*\\)"
      (1 'magik-variable-face)
      (2 'magik-cb-gather-face))
-    ("^\\s-+\\(.*\\)\\(OPT.+\\)"
+    ("^\\s-+\\(.*?\\)\\(OPT.*\\)"
      (1 'magik-variable-face)
      (2 'magik-cb-optional-face))
     ("^\\s-+.*$" . 'magik-variable-face))
