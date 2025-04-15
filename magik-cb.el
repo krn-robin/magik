@@ -99,7 +99,7 @@
   "The method \"IN\" class keyword.")
 
 (defgroup magik-cb-faces nil
-  "Fontification colours for Class Browser."
+  "Faces for highlighting text in the Class Browser."
   :group 'magik-cb)
 
 (defface magik-cb-optional-face
@@ -124,7 +124,7 @@
 
 (defface magik-cb-cursor-face
   '((t (:inverse-video t)))
-  "Font Lock mode face to use for the Mode line cursor."
+  "Font Lock mode face used to display the Mode line cursor."
   :group 'magik-cb-faces)
 
 (defcustom magik-cb-font-lock-keywords
@@ -314,12 +314,12 @@ Not used yet.")
 
 (defface magik-cb2-on-face
   '((t :inherit magik-method-face))
-  "Font Lock mode face used to display the variable."
+  "Font Lock mode face used to display enabled status."
   :group 'magik-cb-faces)
 
 (defface magik-cb2-off-face
   '((t :inherit magik-variable-face))
-  "Font Lock mode face used to display the variable."
+  "Font Lock mode face used to display disabled status."
   :group 'magik-cb-faces)
 
 (defface magik-cb2-thermometer-on-face

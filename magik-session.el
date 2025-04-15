@@ -137,7 +137,7 @@ that use command string matching are not affected by this setting."
   :type 'boolean)
 
 (defgroup magik-session-faces nil
-  "Fontification colours for Magik session."
+  "Faces for highlighting text in the Magik session."
   :group 'magik-session)
 
 (defface magik-session-error-face
