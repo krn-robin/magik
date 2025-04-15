@@ -55,7 +55,7 @@ See `imenu-generic-expression'.")
    '("#[0-9]+" . font-lock-variable-name-face)
    '("#.*" . font-lock-comment-face))
   "Default fontification of Magik Messages."
-  :group 'msg
+  :group 'magik-msg
   :type 'sexp)
 
 (defun magik-msg-customize ()

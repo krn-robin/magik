@@ -39,7 +39,6 @@
 
 (defgroup magik nil
   "Customise Magik Language group."
-  :group 'smallworld
   :group 'languages)
 
 (defcustom magik-transmit-debug-p nil
@@ -640,7 +639,7 @@ Based from `magik-font-lock-keywords-4'."
 
 (defcustom magik-transmit-method-eom-mode nil
   "Variable storing setting of \\[magik-transmit-method-eom-mode]."
-  :group  'magik
+  :group 'magik
   :type  (list 'choice
                (list 'const ':tag "Transmit Method = Do Not Move Point" nil)
                (list 'const ':tag "Transmit Method = Move to End" 'end)
