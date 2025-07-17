@@ -103,6 +103,9 @@
   :init-value t
   (message "Electric Magik %s" (if magik-electric-mode "on" "off")))
 
+;;;###autoload
+(magik-electric-mode magik-electric-mode)
+
 (defun magik-electric-hash (char)
   "Insert the CHAR, '#'.
 If it's the first '#' and the previous line starts with '#', align with it."
