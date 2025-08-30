@@ -17,7 +17,8 @@
 
 (depends-on "emacs" "24.4")
 (depends-on "compat")
-(depends-on "flycheck")
+(when (version< "27.0" emacs-version)
+    (depends-on "flycheck"))
 (depends-on "yasnippet")
 
 ;; do not try to compile magik-ts-mode.el if we are below 29.1
