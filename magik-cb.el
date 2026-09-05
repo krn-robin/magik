@@ -91,8 +91,7 @@
 (defgroup magik-cb nil
   "Running Magik Class Browser."
   :tag "Class Browser"
-  :group 'magik
-  :group 'tools)
+  :group 'magik)
 
 (defconst magik-cb-in-keyword "  IN  "
   "The method \"IN\" class keyword.")
@@ -382,6 +381,35 @@ Not used yet.")
 ;; S T A R T U P
 ;; _____________
 
+(defun magik-cb--cb-buffer-name-p (name)
+  "Return non-nil when NAME is a Class Browser buffer name."
+  (string-prefix-p "*cb*" name))
+
+(defun magik-cb--allocate-new-cb-buffer (gis)
+  "Allocate a fresh CB buffer for the GIS session.
+Returns the list (SMALLWORLD-GIS MAGIK-CB-FILE BUFFER NEW-GIS)."
+  (let* ((smallworld-gis (buffer-local-value 'magik-smallworld-gis (get-buffer gis)))
+         (magik-cb-file (magik-cb-set-filename smallworld-gis))
+         (buffer (generate-new-buffer-name
+                  (concat "*cb*" "*" (file-name-nondirectory magik-cb-file) "*"))))
+    (list smallworld-gis magik-cb-file buffer (magik-cb-gis-buffer buffer))))
+
+(defun magik-cb--select-visible-buffer (visible-bufs)
+  "Pick a CB or Magik session buffer from the VISIBLE-BUFS in other frames.
+Returns the chosen buffer name, or nil if the user cancelled."
+  (cond ((= (length visible-bufs) 1)
+         (caar visible-bufs))
+        ((and (= (length visible-bufs) 2)
+              (magik-cb--cb-buffer-name-p (caar visible-bufs)))
+         (caar visible-bufs))
+        ((and (= (length visible-bufs) 2)
+              (magik-cb--cb-buffer-name-p (caadr visible-bufs)))
+         (caadr visible-bufs))
+        (t
+         (completing-read
+          "Enter Class Browser or Magik Session buffer:"
+          visible-bufs nil t))))
+
 ;;;###autoload
 (defun magik-cb (&optional gis method class)
   "Start or resume a Smallworld Class Browser.
@@ -424,11 +452,8 @@ Set METHOD and CLASS if given."
              (pop-to-buffer buffer)
              (error "No Class Browser is running")))
           (current-prefix-arg
-           (setq smallworld-gis (buffer-local-value 'magik-smallworld-gis (get-buffer gis))
-                 magik-cb-file (magik-cb-set-filename smallworld-gis)
-                 buffer (generate-new-buffer-name
-                         (concat "*cb*" "*" (or buffer (file-name-nondirectory magik-cb-file)) "*"))
-                 gis    (magik-cb-gis-buffer buffer)))
+           (pcase-let ((`(,sg ,f ,b ,g) (magik-cb--allocate-new-cb-buffer gis)))
+             (setq smallworld-gis sg magik-cb-file f buffer b gis g)))
           ((derived-mode-p 'magik-cb-mode)
            (setq gis (magik-cb-gis-buffer)))
           ((derived-mode-p 'magik-session-mode)
@@ -436,7 +461,7 @@ Set METHOD and CLASS if given."
           ((and ;List of *visible* cb-mode *and* magik-session-mode buffers.
             (setq bufs
                   (delete nil
-                          (mapcar (function (lambda (b) (when (cdr b) b)))
+                          (mapcar (lambda (b) (when (cdr b) b))
                                   (setq visible-bufs
                                         (magik-utils-buffer-visible-list '(magik-cb-mode magik-session-mode))))))
             ;;restrict list to those whose cdr is t.
@@ -447,31 +472,17 @@ Set METHOD and CLASS if given."
                      "Enter Class Browser or Magik Session buffer:"
                      visible-bufs 'cdr t)))
             (not (equal buffer "")))
-           (unless (equal (substring buffer 0 4) "*cb*") ;;Selected a CB buffer
+           (unless (magik-cb--cb-buffer-name-p buffer)
              (setq gis buffer
                    buffer (concat "*cb*" buffer))))
-          ((and
-            visible-bufs
-            (setq buffer
-                  ;;Find visible CB buffer in other frame, allowing for a visible Magik session buffer too.
-                  (cond ((= (length visible-bufs) 1)
-                         (caar visible-bufs))
-                        ((and (= (length visible-bufs) 2)
-                              (equal (substring (caar visible-bufs) 0 4) "*cb*"))
-                         (caar visible-bufs))
-                        ((and (= (length visible-bufs) 2)
-                              (equal (substring (caadr visible-bufs) 0 4) "*cb*"))
-                         (caadr visible-bufs))
-                        (t
-                         (completing-read
-                          "Enter Class Browser or Magik Session buffer:"
-                          visible-bufs nil t))))
-            (not (equal buffer "")))
+          ((and visible-bufs
+                (setq buffer (magik-cb--select-visible-buffer visible-bufs))
+                (not (equal buffer "")))
            (select-frame-set-input-focus
             (window-frame (get-buffer-window buffer 'visible)))
-           (unless (equal (substring buffer 0 4) "*cb*") ;;Selected a CB buffer
+           (unless (magik-cb--cb-buffer-name-p buffer)
              (setq gis buffer
-                   buffer (concat "*cb*"  buffer))))
+                   buffer (concat "*cb*" buffer))))
           ((setq buffer (magik-utils-get-buffer-mode nil
                                                      'magik-cb-mode
                                                      "Enter Class Browser buffer:"
@@ -483,11 +494,8 @@ Set METHOD and CLASS if given."
           ((not gis)
            (error "There is no Magik Session running"))
           (t
-           (setq smallworld-gis (buffer-local-value 'magik-smallworld-gis (get-buffer gis))
-                 magik-cb-file (magik-cb-set-filename smallworld-gis)
-                 buffer (generate-new-buffer-name
-                         (concat "*cb*" "*" (file-name-nondirectory magik-cb-file) "*"))
-                 gis    (magik-cb-gis-buffer buffer))))
+           (pcase-let ((`(,sg ,f ,b ,g) (magik-cb--allocate-new-cb-buffer gis)))
+             (setq smallworld-gis sg magik-cb-file f buffer b gis g))))
 
     (setq buffer (or buffer (concat "*cb*" gis))
           smallworld-gis (cond
@@ -540,7 +548,7 @@ cb-jump-replaces-cb-buffer
 To view the help on these variables type \\[describe-variable] and enter the variable name.
 
 \\{magik-cb-mode-map}"
-  :group 'magik
+  :group 'magik-cb
   :abbrev-table nil
 
   (compat-call setq-local
@@ -568,8 +576,8 @@ To view the help on these variables type \\[describe-variable] and enter the var
 (easy-menu-define magik-cb-menu magik-cb-mode-map
   "Menu for CB mode."
   `(,"CB"
-    [,"Jump to Source" magik-cb-jump-to-source        :active t :keys "<f3> j,   <mouse-2>"]
-    [,"Family Tree"    magik-cb-family                :active t :keys "<f3> f,   <mouse-2>"]
+    [,"Jump to Source" magik-cb-jump-to-source        :active t :keys "C-c C-j,   <mouse-2>"]
+    [,"Family Tree"    magik-cb-family                :active t :keys "C-c C-a,   <mouse-2>"]
     [,"Fold"           magik-cb-fold                  (or (magik-cb-topic-on-p "show-topics")
                                                           (magik-cb-topic-on-p "show-comments")
                                                           (magik-cb-topic-on-p "show-args")
@@ -579,17 +587,17 @@ To view the help on these variables type \\[describe-variable] and enter the var
                                                           (not (magik-cb-topic-on-p "show-args"))
                                                           (not (magik-cb-topic-on-p "show-classes")))]
     "---"
-    [,"Set Options"             magik-cb-edit-topics-and-flags :active t :keys "<f3> s,   ;"]
+    [,"Set Options"             magik-cb-edit-topics-and-flags :active t :keys "C-c C-s,   ;"]
     [,"Turn All Topics On/Off"  magik-cb-toggle-all-topics     t]
     [,"Reset All Options"       magik-cb-reset                 t]
-    [,"Hide"                    magik-cb-quit                  :active t :keys "SPC,   <f3> h"]
+    [,"Hide"                    magik-cb-quit                  :active t :keys "SPC,   C-c C-q"]
     "---"
     [,"Override Flags"
      magik-cb-toggle-override-flags
      :active t
      :style toggle
      :selected (magik-cb-topic-on-p "override-flags")
-     :keys "<f3> F,   <f3> o"]
+     :keys "C-c C-f"]
     [,"Override Topics"
      magik-cb-toggle-override-topics
      :active t
@@ -1278,24 +1286,6 @@ separated by spaces."
 
 ;; T O P I C   A N D   F L A G   U T I L S
 ;; _______________________________________
-;;
-;; magik-cb-topic-elt (str)
-;;
-;; magik-cb-is-a-topic (str)
-;; magik-cb-topic-on-p (str)
-;; magik-cb-all-topics-on-p ()         DOESN'T APPLY TO FLAGS.
-;;
-;; magik-cb-set-topic (str new-val)
-;; magik-cb-send-topic (str)
-;; magik-cb-display-topic (topic)     PROVIDED "*cb2*" EXISTS AND IS IN TOPIC MODE.
-;;
-;; magik-cb-toggle (str)        SET, SEND and DISPLAY.
-;;
-;; magik-cb-set-all-topics (new-val)   DOESN'T APPLY TO FLAGS.
-;; magik-cb-send-all-topics ()
-;; magik-cb-display-all-topics ()
-;;
-;; magik-cb-curr-topic ()
 
 (defun magik-cb-topic-elt (str)
   "Return an element from the topic and flag list using STR."
@@ -1473,7 +1463,7 @@ Be careful to preserve the position in \"*cb2*\"."
   "Ensure \"*cb2*\" exists in magik-cb-mode with the correct keymap and modeline.
 
 \\{magik-cb2-mode-map}"
-  :group 'magik
+  :group 'magik-cb
   :abbrev-table nil
 
   (compat-call setq-local
@@ -2369,21 +2359,21 @@ See the variable `magik-cb-generalise-file-name-alist' for more customisation."
   (define-key magik-cb-mode-map [right]   'magik-cb-forward-char)
   (define-key magik-cb-mode-map [mouse-2] 'magik-cb-mouse)
 
-  (define-key magik-cb-mode-map (kbd "<f3> <up>")   'magik-cb-fold)
-  (define-key magik-cb-mode-map (kbd "<f3> <down>") 'magik-cb-unfold)
-  (define-key magik-cb-mode-map (kbd "<f3> $")      'magik-cb-gis-shell)
-  (define-key magik-cb-mode-map (kbd "<f3> F")      'magik-cb-toggle-override-flags)
-  (define-key magik-cb-mode-map (kbd "<f3> T")      'magik-cb-toggle-override-topics)
-  (define-key magik-cb-mode-map (kbd "<f3> 2")      'magik-cb-toggle-override-200-limit)
-  (define-key magik-cb-mode-map (kbd "<f3> f")      'magik-cb-family)
-  (define-key magik-cb-mode-map (kbd "<f3> g")      'magik-cb-gis)
-  (define-key magik-cb-mode-map (kbd "<f3> h")      'magik-cb-quit)
-  (define-key magik-cb-mode-map (kbd "<f3> j")      'magik-cb-jump-to-source)
-  (define-key magik-cb-mode-map (kbd "<f3> l")      'magik-cb-next-inheritance-setting)
-  (define-key magik-cb-mode-map (kbd "<f3> r")      'magik-cb-reset)
-  (define-key magik-cb-mode-map (kbd "<f3> o")      'magik-cb-toggle-override-flags)
-  (define-key magik-cb-mode-map (kbd "<f3> s")      'magik-cb-edit-topics-and-flags)
-  (define-key magik-cb-mode-map (kbd "<f3> t")      'magik-cb-toggle-all-topics)
+  ;; Class browser controls — C-c C-<control> (reserved for major modes)
+  (define-key magik-cb-mode-map (kbd "C-c C-u") 'magik-cb-fold)
+  (define-key magik-cb-mode-map (kbd "C-c C-o") 'magik-cb-unfold)
+  (define-key magik-cb-mode-map (kbd "C-c C-$") 'magik-cb-gis-shell)
+  (define-key magik-cb-mode-map (kbd "C-c C-f") 'magik-cb-toggle-override-flags)
+  (define-key magik-cb-mode-map (kbd "C-c C-t") 'magik-cb-toggle-override-topics)
+  (define-key magik-cb-mode-map (kbd "C-c C-2") 'magik-cb-toggle-override-200-limit)
+  (define-key magik-cb-mode-map (kbd "C-c C-a") 'magik-cb-family)
+  (define-key magik-cb-mode-map (kbd "C-c C-z") 'magik-cb-gis)
+  (define-key magik-cb-mode-map (kbd "C-c C-q") 'magik-cb-quit)
+  (define-key magik-cb-mode-map (kbd "C-c C-j") 'magik-cb-jump-to-source)
+  (define-key magik-cb-mode-map (kbd "C-c C-l") 'magik-cb-next-inheritance-setting)
+  (define-key magik-cb-mode-map (kbd "C-c C-r") 'magik-cb-reset)
+  (define-key magik-cb-mode-map (kbd "C-c C-s") 'magik-cb-edit-topics-and-flags)
+  (define-key magik-cb-mode-map (kbd "C-c C-g") 'magik-cb-toggle-all-topics)
 
   (define-key magik-cb-mode-map [remap save-buffer] 'magik-cb-disable-save))
 

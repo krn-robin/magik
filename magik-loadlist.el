@@ -1,4 +1,4 @@
-;;; magik-loadlist.el --- mode for editing Magik load_list.txt files.
+;;; magik-loadlist.el --- mode for editing Magik load_list.txt files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@ Initial ^ and final $ is automatically added in `loadlist-ignore'."
 You can customize magik-loadlist-mode with the magik-loadlist-mode-hook.
 
 \\{magik-loadlist-mode-map}"
-  :group 'magik
+  :group 'magik-loadlist
   :abbrev-table nil
 
   (compat-call setq-local
@@ -110,7 +110,7 @@ You can customize magik-loadlist-mode with the magik-loadlist-mode-hook.
         (setq file (buffer-substring-no-properties start (point)))
         (cond ((equal file "")
                (setq file nil))
-              ((eq (substring file -1) ?\\)
+              ((eq (aref file (1- (length file))) ?\\)
                (aset file (1- (length file)) ?/))
               ((and (> (length file) 5)
                     (equal (substring file -6) ".magik"))
@@ -251,14 +251,14 @@ is dropped."
 
 ;;; Package registration
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("load_list.txt\\'" . magik-loadlist-mode))
-(add-to-list 'auto-mode-alist '("patch_list.txt\\'" . magik-loadlist-mode))
+(add-to-list 'auto-mode-alist '("load_list\\.txt\\'" . magik-loadlist-mode))
+(add-to-list 'auto-mode-alist '("patch_list\\.txt\\'" . magik-loadlist-mode))
 
 (progn
   ;; ------------------------ magik loadlist mode  ------------------------
 
-  (define-key magik-loadlist-mode-map (kbd "<f2> b") 'magik-loadlist-transmit-buffer)
-  (define-key magik-loadlist-mode-map "\C-cr" 'magik-loadlist-refresh-contents))
+  (define-key magik-loadlist-mode-map (kbd "C-c C-b") 'magik-loadlist-transmit-buffer)
+  (define-key magik-loadlist-mode-map (kbd "C-c C-r") 'magik-loadlist-refresh-contents))
 
 (provide 'magik-loadlist)
 ;;; magik-loadlist.el ends here

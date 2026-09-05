@@ -22,7 +22,7 @@
 (eval-when-compile
   (defvar magik-indent-level)
   (declare-function magik-indent-command "magik-indent")
-  (declare-function magik-pragma-insert-deprecated-template "magik-indent"))
+  (declare-function magik-pragma-insert-deprecated-template "magik-pragma"))
 
 (defgroup magik-electric nil
   "Customise Electric Magik group."
@@ -156,7 +156,7 @@ If it's the first '#' and the previous line starts with '#', align with it."
           (t
            (setq keyword (completing-read
                           "Electric template: "
-                          (mapcar (function (lambda (k) (cons k k))) keyword)
+                          (mapcar (lambda (k) (cons k k)) keyword)
                           nil t))))
     (if keyword
         (progn
@@ -257,8 +257,7 @@ If it's the first '#' and the previous line starts with '#', align with it."
             (save-excursion
               (and (string-match "classify_level=deprecated" str) ;Was it deprecated?
                    (goto-char pt)                                 ;place point ready to insert deprecated template
-                   (magik-pragma-insert-deprecated-template)      ;because this fn assumes that it is on the pragma line
-                   )))
+                   (magik-pragma-insert-deprecated-template))))   ;because this fn assumes that it is on the pragma line
         (let ((str (if (> (length line) 1)
                        (cadr line)
                      magik-electric-default-pragma)))

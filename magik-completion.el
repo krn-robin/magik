@@ -204,15 +204,23 @@ Returns a list of variable name strings."
 (defconst magik-completion--ts-local-scopes '("method" "procedure" "block")
   "Tree-sitter node types that delimit a local variable scope.")
 
+(defconst magik-completion--ts-param-scopes '("method" "procedure")
+  "Tree-sitter node types that carry their own parameter list.")
+
+(defconst magik-completion--ts-local-scopes '("method" "procedure" "block")
+  "Tree-sitter node types that delimit a local variable scope.")
+
 (defun magik-completion--ts-scan-variables ()
   "Scan variables using tree-sitter for accurate scope detection.
 Returns a list of variable name strings visible at point."
   (let ((variables '())
         (node (treesit-node-at (point))))
-    ;; Params come from the enclosing method/procedure even in a nested block.
+    ;; Parameters come from the enclosing method or procedure, even
+    ;; when point is inside a nested block.
     (when-let* ((scope (magik-completion--ts-enclosing-scope
                         node magik-completion--ts-param-scopes)))
       (setq variables (magik-completion--ts-collect-params scope variables)))
+    ;; Collect local variables and assignments within scope, before point.
     (when-let* ((scope (magik-completion--ts-enclosing-scope
                         node magik-completion--ts-local-scopes)))
       (setq variables (magik-completion--ts-walk-for-assignments
@@ -280,6 +288,7 @@ Returns the updated VARIABLES list."
         (setq variables (magik-completion--ts-add-names
                          (magik-completion--ts-filter-children node "identifier")
                          limit variables)))))
+    ;; Recurse into children
     (dolist (child (treesit-node-children node))
       (when (< (treesit-node-start child) limit)
         (setq variables (magik-completion--ts-walk-for-assignments child limit variables)))))
@@ -316,6 +325,7 @@ Returns a list of variable name strings."
           (dolist (v (split-string vars-str "[, \t]+" t))
             (unless (member v variables)
               (push v variables)))))
+      ;; Find _import declarations
       (goto-char method-start)
       (while (re-search-forward
               "\\_<_import\\s-+\\([a-z_][a-z0-9_!?, \t]*\\)" limit t)
@@ -323,6 +333,7 @@ Returns a list of variable name strings."
           (unless (or (string-prefix-p "_" v)
                       (member v variables))
             (push v variables)))))
+    ;; Find method parameters
     (save-excursion
       (goto-char method-start)
       (when (re-search-forward

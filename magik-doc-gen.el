@@ -23,22 +23,7 @@
 
 ;;; Code:
 
-(defconst magik-regexp
-  '(("method" .
-     "^[_abstract\s|_private\s|_iter\s]*?_method")
-    ("method-with-arguments" .
-     "^[_abstract\s|_private\s|_iter\s]*?_method.*(\\([\0-\377[:nonascii:]]*?\\))")
-    ("assignment-method" .
-     "^[_abstract\s|_private\s|_iter\s]*?_method.*<<\s?\\(.*\\)")
-    ("endmethod" .
-     "^\\s-*_endmethod\\s-*\\(\n\\$\\s-*\\)?$")
-    ("method-argument" .
-     "_gather\\|_scatter\\|_optional")
-    ("pragma" .
-     "^_pragma(.*)")
-    ("def_slotted_exemplar" .
-     "^[sw:]?def_slotted_exemplar(.*"))
-  "List of regexp strings to search for a Magik string in a buffer.")
+(require 'magik-utils)
 
 (defun magik-file-sw-method-doc ()
   "Search a file for missing parameters in the methods.
@@ -135,7 +120,8 @@ Argument METHOD-STRING is the string with the method contents."
         (documentation nil)
         (documentation-found 0)
         (starting-point (+ 1 (line-number-at-pos))))
-    (while (not (looking-at (cdr (assoc "endmethod" magik-regexp))))
+    (while (and (not (eobp))
+                (not (looking-at (cdr (assoc "endmethod" magik-regexp)))))
       (when (and (not (looking-at "^\t##$"))
                  (looking-at "^\t##"))
         (setq documentation-found (+ 1 documentation-found)
@@ -192,7 +178,8 @@ Argument METHOD-STRING is the string with the method contents."
         (documentation-found 0)
         (write-return t)
         (starting-point (+ 1 (line-number-at-pos))))
-    (while (not (looking-at (cdr (assoc "endmethod" magik-regexp))))
+    (while (and (not (eobp))
+                (not (looking-at (cdr (assoc "endmethod" magik-regexp)))))
       (when (and (not (looking-at "^\t##$"))
                  (looking-at "^\t##"))
         (setq documentation-found (+ 1 documentation-found)

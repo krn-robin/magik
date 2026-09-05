@@ -21,9 +21,10 @@ The alternative, and recommended, way of installing [magik-mode](https://github.
 (use-package magik-mode
   :ensure t
   :config
-  (magik-global-bindings)
   (magik-menu-set-menus))
 ```
+
+All keybindings are now mode-local and use the standard `C-c` prefix reserved for major modes. No global bindings are set by default.
 
 ## Features
 
@@ -105,37 +106,28 @@ Well here's what you need to do:
   (magik-menu-set-menus))
 ```
 
-### Global keys
+### Key binding conventions
 
-Global keys are set by calling `(magik-global-bindings)` after the package has been loaded.
+All keybindings use the `C-c` prefix reserved for major modes by the [GNU Emacs conventions](https://www.gnu.org/software/emacs/manual/html_node/elisp/Key-Binding-Conventions.html). No function keys or global bindings are set by default.
 
-| Key | Description |
+Bindings are organised into sub-prefixes:
+
+| Prefix | Category |
 | :---: | --- |
-| <kbd>F6</kbd> | Copy current method to kill-ring |
-| <kbd>F7</kbd> | Transmit current method to Magik session |
-| <kbd>F8</kbd> | Transmit current region to Magik session |
-| <kbd>F9</kbd> | Mark current method |
-| <kbd>F2</kbd>-<kbd>Return</kbd> | Transmit thing at point to Magik session |
-| <kbd>F2</kbd>-<kbd>F7</kbd> | Transmit current method to Magik session |
-| <kbd>F2</kbd>-<kbd>F8</kbd> | Transmit current region to Magik session |
-| <kbd>F2</kbd>-<kbd>#</kbd> | Comment region |
-| <kbd>F2</kbd>-<kbd>Esc</kbd> <kbd>#</kbd> | Uncomment region |
-| <kbd>F2</kbd>-<kbd>b</kbd> | Transmit buffer to Magik session |
-| <kbd>F2</kbd>-<kbd>e</kbd> | Toggle `magik-electric-mode` |
-| <kbd>F2</kbd>-<kbd>m</kbd> | Transmit current method to Magik session |
-| <kbd>F2</kbd>-<kbd>q</kbd> | Fill public comment |
-| <kbd>F2</kbd>-<kbd>r</kbd> | Transmit current region to Magik session |
-| <kbd>F2</kbd>-<kbd>s</kbd> | Open Magik version selection |
-| <kbd>F2</kbd>-<kbd>t</kbd> | Trace current statement |
-| <kbd>F2</kbd>-<kbd>Space</kbd> | Explicitly trigger electric space |
-| <kbd>F2</kbd>-<kbd>Tab</kbd> | Hippie expand |
-| <kbd>F2</kbd>-<kbd>z</kbd> | Start a Magik session |
-| <kbd>F3</kbd>-<kbd>F3</kbd> | Open Class Browser |
-| <kbd>F3</kbd>-<kbd>b</kbd> | Paste method and class into Class Browser |
-| <kbd>F3</kbd>-<kbd>c</kbd> | Paste class name into Class Browser |
-| <kbd>F3</kbd>-<kbd>j</kbd> | Jump to source of method under point |
-| <kbd>F3</kbd>-<kbd>m</kbd> | Paste method name into Class Browser |
-| <kbd>F3</kbd>-<kbd>/</kbd> | Open Class Browser and clear search |
+| <kbd>C-c C-c</kbd>, <kbd>C-c C-r</kbd>, <kbd>C-c C-b</kbd>, <kbd>C-c C-l</kbd> | Send to session |
+| <kbd>C-c C-d</kbd> | Documentation / Class Browser |
+| <kbd>C-c C-e</kbd> | Editing / work buffer |
+| <kbd>C-c C-;</kbd>, <kbd>C-c ;</kbd> | Pragma / method-doc |
+
+#### Legacy bindings
+
+For backward compatibility with the old F-key bindings, enable the legacy minor mode:
+
+```emacs-lisp
+(magik-legacy-keys-mode 1)
+```
+
+Or equivalently call the deprecated `(magik-global-bindings)`.
 
 ### magik-version
 
@@ -170,29 +162,27 @@ Major mode for running a Magik session as a direct sub-process. Provides command
 | <kbd>C-a</kbd> | Move to beginning of line, or after the prompt. |
 | <kbd>M-p</kbd> | Recall previous command from history. |
 | <kbd>M-n</kbd> | Recall next command from history. |
-| <kbd>F2</kbd>-<kbd>↑</kbd> or <kbd>F2</kbd>-<kbd>C-p</kbd> | Fold buffer to show command history. |
-| <kbd>F2</kbd>-<kbd>↓</kbd> or <kbd>F2</kbd>-<kbd>C-n</kbd> | Unfold buffer. |
-| <kbd>F2</kbd>-<kbd>=</kbd> | Print last traceback. |
-| <kbd>F2</kbd>-<kbd>f</kbd> | Toggle output filter. |
-| <kbd>F2</kbd>-<kbd>i</kbd> | Invalidate completion caches. |
-| <kbd>F2</kbd>-<kbd>p</kbd> | Recall previous command matching current input. |
-| <kbd>F2</kbd>-<kbd>n</kbd> | Recall next command matching current input. |
-| <kbd>F4</kbd>-<kbd>F4</kbd> | Complete symbol at point. |
-| <kbd>F4</kbd>-<kbd>↑</kbd> | Navigate to previous traceback frame. |
-| <kbd>F4</kbd>-<kbd>↓</kbd> | Navigate to next traceback frame. |
-| <kbd>F4</kbd>-<kbd>$</kbd> | Start an external shell. |
-| <kbd>F4</kbd>-<kbd>g</kbd> | Go to the file referenced in the current error. |
-| <kbd>F4</kbd>-<kbd>m</kbd> | Copy current method to work buffer. |
-| <kbd>F4</kbd>-<kbd>r</kbd> | Copy current region to work buffer. |
-| <kbd>F4</kbd>-<kbd>s</kbd> | Insert a debug statement. |
-| <kbd>F4</kbd>-<kbd>w</kbd> | Set work buffer name. |
-| <kbd>F4</kbd>-<kbd>P</kbd> | Print traceback. |
-| <kbd>F4</kbd>-<kbd>S</kbd> | Save traceback to file. |
-| <kbd>F8</kbd> | Send command at point. |
+| <kbd>C-c RET</kbd> | Send command at point. |
 | <kbd>C-c C-c</kbd> | Kill the Magik session process. |
 | <kbd>C-c C-\</kbd> | Send quit signal to the session. |
 | <kbd>C-c C-z</kbd> | Send stop signal to the session. |
 | <kbd>C-c C-d</kbd> | Send EOF to the session. |
+| <kbd>C-c C-p</kbd> | Fold buffer to show command history. |
+| <kbd>C-c C-n</kbd> | Unfold buffer. |
+| <kbd>C-c C-r</kbd> | Recall previous command matching current input. |
+| <kbd>C-c C-s</kbd> | Recall next command matching current input. |
+| <kbd>C-c C-t</kbd> | Print last traceback. |
+| <kbd>C-c C-u</kbd> | Navigate to previous traceback frame. |
+| <kbd>C-c C-o</kbd> | Navigate to next traceback frame. |
+| <kbd>C-c C-v</kbd> | Save traceback to file. |
+| <kbd>C-c C-g</kbd> | Go to the file referenced in the current error. |
+| <kbd>C-c C-f</kbd> | Toggle output filter. |
+| <kbd>C-c C-i</kbd> | Invalidate completion caches. |
+| <kbd>C-c C-$</kbd> | Start an external shell. |
+| <kbd>C-c C-e m</kbd> | Copy current method to work buffer. |
+| <kbd>C-c C-e r</kbd> | Copy current region to work buffer. |
+| <kbd>C-c C-e s</kbd> | Insert a debug statement. |
+| <kbd>C-c C-e n</kbd> | Set work buffer name. |
 
 ### magik-mode
 
@@ -200,7 +190,7 @@ Major prog mode for editing Magik code. Provides syntax highlighting, smart inde
 
 Support for outline-minor mode. Try: `(outline-minor-mode)`
 
-Support for imenu. Try: `(add-hook 'magik-mode-hook 'imenu-add-menubar-index)`
+Support for imenu. Try: `(add-hook 'magik-mode-hook #'imenu-add-menubar-index)`
 
 | Key | Description |
 | :---: | --- |
@@ -211,22 +201,36 @@ Support for imenu. Try: `(add-hook 'magik-mode-hook 'imenu-add-menubar-index)`
 | <kbd>/</kbd> | Cycle pragma option forward. |
 | <kbd>\</kbd> | Cycle pragma option backward. |
 | <kbd>C-M-h</kbd> | Mark current method; repeat to extend selection. |
-| <kbd>M-↑</kbd> or <kbd>F2</kbd>-<kbd>↑</kbd> | Move to previous method. |
-| <kbd>M-↓</kbd> or <kbd>F2</kbd>-<kbd>↓</kbd> | Move to next method. |
-| <kbd>F2</kbd>-<kbd>$</kbd> | Transmit current `$` chunk to session. |
-| <kbd>F2</kbd>-<kbd>i</kbd> | Invalidate completion caches. |
-| <kbd>F2</kbd>-<kbd>d</kbd> | Check documentation for method at point. |
-| <kbd>F2</kbd>-<kbd>D</kbd> | Check documentation for all methods in file. |
-| <kbd>F2</kbd>-<kbd>p</kbd> | Check pragma for method at point. |
-| <kbd>F2</kbd>-<kbd>P</kbd> | Check pragma for all methods in file. |
-| <kbd>F4</kbd>-<kbd>F4</kbd> | Complete symbol at point. |
-| <kbd>F4</kbd>-<kbd>c</kbd> | Copy current method to kill-ring. |
-| <kbd>F4</kbd>-<kbd>e</kbd> | Compare methods between windows with ediff. |
-| <kbd>F4</kbd>-<kbd>m</kbd> | Copy current method to work buffer. |
-| <kbd>F4</kbd>-<kbd>n</kbd> | Set work buffer name. |
-| <kbd>F4</kbd>-<kbd>r</kbd> | Copy current region to work buffer. |
-| <kbd>F4</kbd>-<kbd>s</kbd> | Insert a debug statement. |
-| <kbd>F4</kbd>-<kbd>w</kbd> | Compare methods between windows. |
+| <kbd>M-↑</kbd> | Move to previous method. |
+| <kbd>M-↓</kbd> | Move to next method. |
+| <kbd>C-c C-c</kbd> | Transmit current method to session. |
+| <kbd>C-c C-r</kbd> | Transmit current region to session. |
+| <kbd>C-c C-b</kbd> | Transmit buffer to session. |
+| <kbd>C-c C-l</kbd> | Transmit current `$` chunk to session. |
+| <kbd>C-c RET</kbd> | Transmit thing at point to session. |
+| <kbd>C-c C-z</kbd> | Switch to Magik session buffer. |
+| <kbd>C-c C-p</kbd> | Open Magik version selection. |
+| <kbd>C-c C-t</kbd> | Trace current statement. |
+| <kbd>C-c C-q</kbd> | Fill public comment. |
+| <kbd>C-c C-i</kbd> | Invalidate completion caches. |
+| <kbd>C-c ;</kbd> | Check pragma for method at point. |
+| <kbd>C-c :</kbd> | Check pragma for all methods in file. |
+| <kbd>C-c C-;</kbd> | Check sw-method-doc for method at point. |
+| <kbd>C-c C-:</kbd> | Check sw-method-doc for all methods in file. |
+| <kbd>C-c C-d d</kbd> | Open Class Browser. |
+| <kbd>C-c C-d c</kbd> | Paste class name into Class Browser. |
+| <kbd>C-c C-d m</kbd> | Paste method name into Class Browser. |
+| <kbd>C-c C-d b</kbd> | Paste method and class into Class Browser. |
+| <kbd>C-c C-d j</kbd> | Jump to source of method at point. |
+| <kbd>C-c C-d /</kbd> | Open Class Browser and clear search. |
+| <kbd>C-c C-e c</kbd> | Copy current method to kill-ring. |
+| <kbd>C-c C-e e</kbd> | Compare methods between windows with ediff. |
+| <kbd>C-c C-e d</kbd> | Compare method using Class Browser ediff. |
+| <kbd>C-c C-e m</kbd> | Copy current method to work buffer. |
+| <kbd>C-c C-e n</kbd> | Set work buffer name. |
+| <kbd>C-c C-e r</kbd> | Copy current region to work buffer. |
+| <kbd>C-c C-e s</kbd> | Insert a debug statement. |
+| <kbd>C-c C-e w</kbd> | Compare methods between windows. |
 
 ### magik-ts-mode
 
@@ -243,37 +247,37 @@ For more information about Tree-sitter, see the Mastering Emacs [tutorial](https
 
 Major mode for the Magik Class Browser. Searches for methods and classes using a running `method_finder` process and lets you jump directly to source.
 
-**Global keys** (set by `magik-global-bindings`):
+**Class Browser access from magik-mode** (via the `C-c C-d` prefix):
 
 | Key | Description |
 | :---: | --- |
-| <kbd>F3</kbd>-<kbd>F3</kbd> | Open Class Browser. |
-| <kbd>F3</kbd>-<kbd>b</kbd> | Paste method and class name into Class Browser. |
-| <kbd>F3</kbd>-<kbd>c</kbd> | Paste class name into Class Browser. |
-| <kbd>F3</kbd>-<kbd>j</kbd> | Jump to source of method at point. |
-| <kbd>F3</kbd>-<kbd>m</kbd> | Paste method name into Class Browser. |
-| <kbd>F3</kbd>-<kbd>/</kbd> | Open Class Browser and clear the search. |
+| <kbd>C-c C-d d</kbd> | Open Class Browser. |
+| <kbd>C-c C-d b</kbd> | Paste method and class name into Class Browser. |
+| <kbd>C-c C-d c</kbd> | Paste class name into Class Browser. |
+| <kbd>C-c C-d j</kbd> | Jump to source of method at point. |
+| <kbd>C-c C-d m</kbd> | Paste method name into Class Browser. |
+| <kbd>C-c C-d /</kbd> | Open Class Browser and clear the search. |
 
 **Keys inside the Class Browser buffer:**
 
 | Key | Description |
 | :---: | --- |
-| <kbd>Space</kbd> or <kbd>F3</kbd>-<kbd>h</kbd> | Quit the Class Browser. |
-| <kbd>;</kbd> or <kbd>F3</kbd>-<kbd>s</kbd> | Edit topics and flags. |
+| <kbd>Space</kbd> or <kbd>C-c C-q</kbd> | Quit the Class Browser. |
+| <kbd>;</kbd> or <kbd>C-c C-s</kbd> | Edit topics and flags. |
 | <kbd>/</kbd> | Clear the search field. |
 | <kbd>Tab</kbd> | Cycle to the next input field. |
-| <kbd>Mouse-2</kbd> or <kbd>F3</kbd>-<kbd>j</kbd> | Jump to source. |
-| <kbd>F3</kbd>-<kbd>↑</kbd> | Fold (collapse) the result list. |
-| <kbd>F3</kbd>-<kbd>↓</kbd> | Unfold (expand) the result list. |
-| <kbd>F3</kbd>-<kbd>$</kbd> | Open GIS shell. |
-| <kbd>F3</kbd>-<kbd>f</kbd> | Show family tree of class under point. |
-| <kbd>F3</kbd>-<kbd>F</kbd> or <kbd>F3</kbd>-<kbd>o</kbd> | Toggle override flags. |
-| <kbd>F3</kbd>-<kbd>T</kbd> | Toggle override topics. |
-| <kbd>F3</kbd>-<kbd>t</kbd> | Toggle all topics. |
-| <kbd>F3</kbd>-<kbd>2</kbd> | Toggle 200-result limit. |
-| <kbd>F3</kbd>-<kbd>g</kbd> | Switch to associated GIS session buffer. |
-| <kbd>F3</kbd>-<kbd>l</kbd> | Cycle to next inheritance setting. |
-| <kbd>F3</kbd>-<kbd>r</kbd> | Reset Class Browser. |
+| <kbd>Mouse-2</kbd> or <kbd>C-c C-j</kbd> | Jump to source. |
+| <kbd>C-c C-u</kbd> | Fold (collapse) the result list. |
+| <kbd>C-c C-o</kbd> | Unfold (expand) the result list. |
+| <kbd>C-c C-$</kbd> | Open GIS shell. |
+| <kbd>C-c C-a</kbd> | Show family tree of class under point. |
+| <kbd>C-c C-f</kbd> | Toggle override flags. |
+| <kbd>C-c C-t</kbd> | Toggle override topics. |
+| <kbd>C-c C-g</kbd> | Toggle all topics. |
+| <kbd>C-c C-2</kbd> | Toggle 200-result limit. |
+| <kbd>C-c C-z</kbd> | Switch to associated GIS session buffer. |
+| <kbd>C-c C-l</kbd> | Cycle to next inheritance setting. |
+| <kbd>C-c C-r</kbd> | Reset Class Browser. |
 
 ### magik-module
 
@@ -281,12 +285,12 @@ Major mode for editing Magik `module.def` files. Provides commands to load and m
 
 | Key | Description |
 | :---: | --- |
-| <kbd>F2</kbd>-<kbd>b</kbd> | Load (transmit) the module to the Magik session. |
-| <kbd>F2</kbd>-<kbd>c</kbd> | Compile messages for the module. |
-| <kbd>F2</kbd>-<kbd>d</kbd> | Reload the module definition. |
-| <kbd>F2</kbd>-<kbd>m</kbd> | Toggle the save-magikc option. |
-| <kbd>F2</kbd>-<kbd>r</kbd> | Toggle the force-reload option. |
-| <kbd>F2</kbd>-<kbd>R</kbd> | Remove the module from the session. |
+| <kbd>C-c C-b</kbd> | Load (transmit) the module to the Magik session. |
+| <kbd>C-c C-c</kbd> | Compile messages for the module. |
+| <kbd>C-c C-l</kbd> | Reload the module definition. |
+| <kbd>C-c C-m</kbd> | Toggle the save-magikc option. |
+| <kbd>C-c C-r</kbd> | Toggle the force-reload option. |
+| <kbd>C-c C-k</kbd> | Remove the module from the session. |
 
 ### magik-product
 
@@ -294,8 +298,8 @@ Major mode for editing Magik `product.def` files.
 
 | Key | Description |
 | :---: | --- |
-| <kbd>F2</kbd>-<kbd>b</kbd> | Load (transmit) the product to the Magik session. |
-| <kbd>F2</kbd>-<kbd>r</kbd> | Reinitialise the product. |
+| <kbd>C-c C-b</kbd> | Load (transmit) the product to the Magik session. |
+| <kbd>C-c C-r</kbd> | Reinitialise the product. |
 
 ### magik-msg
 
@@ -303,11 +307,11 @@ Major mode for editing Magik message files (`.msg`, `.hmsg`). Provides navigatio
 
 | Key | Description |
 | :---: | --- |
-| <kbd>F2</kbd>-<kbd>↑</kbd> | Move to previous message. |
-| <kbd>F2</kbd>-<kbd>↓</kbd> | Move to next message. |
-| <kbd>F2</kbd>-<kbd>b</kbd> | Transmit buffer to Magik session. |
-| <kbd>F2</kbd>-<kbd>c</kbd> | Compile module messages. |
-| <kbd>F2</kbd>-<kbd>m</kbd> | Mark current message. |
+| <kbd>M-p</kbd> | Move to previous message. |
+| <kbd>M-n</kbd> | Move to next message. |
+| <kbd>C-c C-b</kbd> | Transmit buffer to Magik session. |
+| <kbd>C-c C-c</kbd> | Compile module messages. |
+| <kbd>C-c C-m</kbd> | Mark current message. |
 
 ### magik-loadlist
 
@@ -315,8 +319,8 @@ Major mode for editing Magik `load_list.txt` and `patch_list.txt` files. Provide
 
 | Key | Description |
 | :---: | --- |
-| <kbd>F2</kbd>-<kbd>b</kbd> | Transmit the load list to the Magik session (`load_file_list`). |
-| <kbd>C-c r</kbd> | Refresh the buffer contents from its directory, prompting to add, remove, or update entries. With a prefix argument, accept all changes without prompting. |
+| <kbd>C-c C-b</kbd> | Transmit the load list to the Magik session (`load_file_list`). |
+| <kbd>C-c C-r</kbd> | Refresh the buffer contents from its directory, prompting to add, remove, or update entries. With a prefix argument, accept all changes without prompting. |
 
 ### magik-trn
 
@@ -324,7 +328,7 @@ Major mode for editing Magik translation files (`.trn`).
 
 | Key | Description |
 | :---: | --- |
-| <kbd>F2</kbd>-<kbd>b</kbd> | Transmit translation buffer to Magik session. |
+| <kbd>C-c C-b</kbd> | Transmit translation buffer to Magik session. |
 
 ### magik-doc-gen
 
@@ -334,12 +338,12 @@ Automatically fills in missing documentation stubs in Magik methods and exemplar
 
 **type-doc** — a structured annotation style using `## @param {:} name` for parameters, `## @return {:}` for return values, and `## @slot {:} name` for exemplar slots.
 
-Commands are bound in `magik-mode` and accessible via <kbd>F2</kbd>-<kbd>d</kbd> / <kbd>F2</kbd>-<kbd>D</kbd>:
+Commands are bound in `magik-mode` and accessible via <kbd>C-c C-;</kbd> / <kbd>C-c C-:</kbd>:
 
 | Key | Command | Description |
 | :---: | --- | --- |
-| <kbd>F2</kbd>-<kbd>d</kbd> | `magik-single-method-sw-method-doc` | Insert missing sw-method-doc stubs for the method at point. |
-| <kbd>F2</kbd>-<kbd>D</kbd> | `magik-file-sw-method-doc` | Insert missing sw-method-doc stubs for all methods in the file. |
+| <kbd>C-c C-;</kbd> | `magik-single-method-sw-method-doc` | Insert missing sw-method-doc stubs for the method at point. |
+| <kbd>C-c C-:</kbd> | `magik-file-sw-method-doc` | Insert missing sw-method-doc stubs for all methods in the file. |
 
 Additional commands available via <kbd>M</kbd>-<kbd>x</kbd>:
 
@@ -500,8 +504,7 @@ The snippets below are available in `magik-mode`, `magik-ts-mode`, and `magik-se
 
 ### magik-electric-mode
 
-Minor mode providing the older electric template system. Use <kbd>F2</kbd>-<kbd>Space</kbd> to trigger an electric expansion explicitly at point, regardless of whether `magik-electric-mode` is enabled.
-Toggle the mode with <kbd>F2</kbd>-<kbd>e</kbd> or <kbd>M</kbd>-<kbd>x</kbd> `magik-electric-mode`.
+Minor mode providing the older electric template system. Toggle the mode with <kbd>M</kbd>-<kbd>x</kbd> `magik-electric-mode`.
 
 ## Usage with Smallworld 4.x or older
 
@@ -510,27 +513,20 @@ If you plan to use this package with Smallworld-Versions 4.x or older, you shoul
 * Customize the variable `magik-session-auto-insert-dollar` to non-nil.
 * You might customize the variable `magik-aliases-layered-products-file` to `"$SMALLWORLD_GIS/product/config/LAYERED_PRODUCTS"`.
 If you also want to use EMACS for Smallworld 5.x, it's easier to create the directory `$SMALLWORLD_GIS/../smallworld_registry` and copy or soft-link the original LAYERED_PRODUCTS file there. This ensures the same structure as in Smallworld 5.x.
-* There is no support (yet) for the Smallworld dev-tools. So if you want to do things like <kbd>F4</kbd>-<kbd>d</kbd> to start debugging a method, you may still want to use the EMACS which has been delivered with the Smallworld 4.x (or older) software.
+* There is no support (yet) for the Smallworld dev-tools. So if you want to start debugging a method, you may still want to use the EMACS which has been delivered with the Smallworld 4.x (or older) software.
 * Some more things which are at least partly not supported by Smallworld 5.x are not supported (e.g. `deep-print`)
 
 ## Side effects
 
-Some keys bindings are changed with respect to a standard EMACS installation, at least when using `(magik-global-bindings)`:
+The default keybinding scheme uses only `C-c` prefixed bindings local to each major mode and does not override any standard Emacs keys.
 
-| Key | Function in standard EMACS | Change in Magik Mode package |
+If you enable `magik-legacy-keys-mode` for backward compatibility, the following standard keys are overridden globally:
+
+| Key | Function in standard Emacs | Change in legacy mode |
 | :---: | --- | --- |
-| <kbd>F2</kbd> | `2C-command` | globally changed to prefix key |
-| <kbd>F3</kbd> | `kmacro-start-macro-or-insert-counter` | globally changed to prefix key |
-| <kbd>F4</kbd> | `kmacro-end-or-call-macro` | used in magik-mode and magik-session-mode as prefix key |
-
-The reason for that is, that many Magik developers are familiar with these bindings from former EMACS installations.
-
-For quick usage of the keyboard-macro functions you may e.g. bind the <kbd>Ctrl</kbd>-<kbd>F2</kbd> and <kbd>Ctrl</kbd>-<kbd>F4</kbd> combinations by putting the following lines into your  `.emacs` file:
-
-```emacs-lisp
-(global-set-key [C-f3] 'kmacro-start-macro-or-insert-counter)
-(global-set-key [C-f4] 'kmacro-end-or-call-macro)
-```
+| <kbd>F2</kbd> | `2C-command`| changed to prefix key |
+| <kbd>F3</kbd> | `kmacro-start-macro-or-insert-counter` | changed to prefix key |
+| <kbd>F6</kbd>-<kbd>F9</kbd> | user-reserved | bound to Magik commands |
 
 ## Familiar with SW 4.x EMACS? Some tips for you
 
@@ -538,8 +534,10 @@ If you've been using the EMACS delivered by GE with Smallworld version 4.3 and e
 
 | actual variable | actual default | former variable | former default | Remarks |
 | :---: | --- | --- | --- | --- |
-| `magik-electric-mode` | t | `electric-magik-mode` | nil | If non-nil, typing <kbd>Space</kbd> after keywords like `if` inserts the matching control structure. If nil, you have to use <kbd>F2</kbd>-<kbd>Space</kbd> to achieve the same behaviour. |
+| `magik-electric-mode` | t | `electric-magik-mode` | nil | If non-nil, typing <kbd>Space</kbd> after keywords like `if` inserts the matching control structure. |
 | `mouse-drag-copy-region` | nil | dto. | t | Paste a mouse selection (even to other programs). (Default has been changed in standard EMACS) |
 | `show-paren-mode` | nil | dto. | t | if point is on opening or after closing bracket, show the matching one. (GE's EMACS had done this customization) |
+
+To restore the old F-key bindings, enable `magik-legacy-keys-mode` in your init file.
 
 Eventually you'll find some more customazations in of the former GE's EMACS' installation in emacs/site-lisp/smallworld/sw_defaults.el, but you'll have to check, whether these will work the the EMACS installation you are using now.

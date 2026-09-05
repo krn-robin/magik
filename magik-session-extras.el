@@ -1,4 +1,4 @@
-;;; magik-session-extras.el --- Optional additions to the magik-session-mode
+;;; magik-session-extras.el --- Optional additions to the magik-session-mode  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 ;;
 ;; Usage:
 ;; via use-package: (use-package magik-session-extras :after magik-mode :hook magik-session-mode)
-;; without use-package: (require 'magik-session-extras) (add-hook 'magik-session-mode-hook 'magik-session-extras)
+;; without use-package: (require 'magik-session-extras) (add-hook 'magik-session-mode-hook #'magik-session-extras)
 
 ;;; Code:
 
@@ -47,7 +47,7 @@ Right now apropos() and print_local_methods()."
           (one-or-more not-newline) ":" (one-or-more (or numeric not-newline))
           (syntax close-parenthesis) eol) . 'magik-session-traceback-call-stack-face)
     (,(rx bol (or "slot" "iter" "method" "class" "CORRUPT") " "
-	  (one-or-more anychar) " in " (one-or-more not-newline) eol) . 'magik-session-method-definition-face))
+          (one-or-more anychar) " in " (one-or-more not-newline) eol) . 'magik-session-method-definition-face))
   "Additional Font-lock Keywords for `magik-session-mode'.")
 
 (defun magik-session-extras--activate ()
@@ -157,7 +157,7 @@ Using the `magik-cb-process' in the background."
   "Load the `magik-session-extras-load-magik-code' in the current Magik session."
   (unless magik-session-extras-magik-code-loaded?
     (magik-session-extras-load-magik-code)
-    (setq magik-session-extras-magik-code-loaded? t)))
+    (compat-call setq-local magik-session-extras-magik-code-loaded? t)))
 
 ;; Inline magik code
 

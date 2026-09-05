@@ -1,4 +1,4 @@
-;;; magik-module.el --- mode for editing Magik module.def files.
+;;; magik-module.el --- mode for editing Magik module.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -30,8 +30,7 @@
 
 (defgroup magik-module nil
   "Customise Magik module.def files group."
-  :group 'magik
-  :group 'tools)
+  :group 'magik)
 
 (defcustom magik-module-option-save-magikc t
   "*If t, save .magikc files when loading module."
@@ -130,7 +129,7 @@ You can customize Module Mode with the `magik-module-mode-hook`.
 
 \\{magik-module-mode-map}"
 
-  :group 'magik
+  :group 'magik-module
   :abbrev-table nil
 
   (compat-call setq-local
@@ -149,38 +148,6 @@ You can customize Module Mode with the `magik-module-mode-hook`.
     [,"Reload definition"  magik-module-reload-module-definition (magik-utils-buffer-mode-list 'magik-session-mode)]
     [,"Compile messages"   magik-module-compile-messages         (magik-utils-buffer-mode-list 'magik-session-mode)]
     [,"Remove"             magik-module-remove-module            (magik-utils-buffer-mode-list 'magik-session-mode)]
-    (,"Set Options..."
-     [,"Set :save_magikc? to _false"
-      (magik-module-toggle-save-magikc -1)
-      :active (magik-utils-buffer-mode-list 'magik-session-mode)
-      :style radio
-      :selected (null module-option-save-magikc)
-      :keys "M-- M-1 <f2> m,   <f2> m"]
-     [,"Set :save_magikc? to _true"
-      (magik-module-toggle-save-magikc 1)
-      :active (magik-utils-buffer-mode-list 'magik-session-mode)
-      :style radio
-      :selected module-option-save-magikc
-      :keys "M-1 <f2> m,   <f2> m"]
-     "---"
-     [,"Set :force_reload? to _false"
-      (magik-module-toggle-force-reload -1)
-      :active (magik-utils-buffer-mode-list 'magik-session-mode)
-      :style radio
-      :selected (null module-option-force-reload)
-      :keys "M-- M-1 <f2> r,   <f2> r"]
-     [,"Set :force_reload? to :prerequisites"
-      (magik-module-toggle-force-reload 'prerequisites)
-      :active (magik-utils-buffer-mode-list 'magik-session-mode)
-      :style radio
-      :selected (eq module-option-force-reload 'prerequisites)
-      :keys "C-u <f2> r"]
-     [,"Set :force_reload? to _true"
-      (magik-module-toggle-force-reload 1)
-      :active (magik-utils-buffer-mode-list 'magik-session-mode)
-      :style radio
-      :selected (eq module-option-force-reload t)
-      :keys "M-1 <f2> r,   <f2> r"])
     "---"
     [,"Customize"                     magik-module-customize   t]))
 
@@ -326,25 +293,23 @@ Called by `magik-session-drag-n-drop-load' when a Module FILENAME is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("module.def\\'" . magik-module-mode))
+(add-to-list 'auto-mode-alist '("module\\.def\\'" . magik-module-mode))
 
 (defvar magik-module-f2-map (make-sparse-keymap)
-  "Keymap for the F2 function key in Magik module.def buffers.")
+  "Legacy keymap for the F2 function key in Magik module.def buffers.
+Kept for backward compatibility; prefer the C-c bindings.")
 
 (progn
   ;; ------------------------ magik module mode ------------------------
 
-  (fset 'magik-module-f2-map   magik-module-f2-map)
+  (define-key magik-module-mode-map " "         'magik-module-yas-maybe-expand)
 
-  (define-key magik-module-mode-map [f2]    'magik-module-f2-map)
-  (define-key magik-module-mode-map " "     'magik-module-yas-maybe-expand)
-
-  (define-key magik-module-f2-map   "b"     'magik-module-transmit-buffer)
-  (define-key magik-module-f2-map   "c"     'magik-module-compile-messages)
-  (define-key magik-module-f2-map   "d"     'magik-module-reload-module-definition)
-  (define-key magik-module-f2-map   "m"     'magik-module-toggle-save-magikc)
-  (define-key magik-module-f2-map   "r"     'magik-module-toggle-force-reload)
-  (define-key magik-module-f2-map   "R"     'magik-module-remove-module))
+  (define-key magik-module-mode-map (kbd "C-c C-b") 'magik-module-transmit-buffer)
+  (define-key magik-module-mode-map (kbd "C-c C-c") 'magik-module-compile-messages)
+  (define-key magik-module-mode-map (kbd "C-c C-l") 'magik-module-reload-module-definition)
+  (define-key magik-module-mode-map (kbd "C-c C-m") 'magik-module-toggle-save-magikc)
+  (define-key magik-module-mode-map (kbd "C-c C-r") 'magik-module-toggle-force-reload)
+  (define-key magik-module-mode-map (kbd "C-c C-k") 'magik-module-remove-module))
 
 (provide 'magik-module)
 ;;; magik-module.el ends here

@@ -26,6 +26,10 @@
 
 (require 'flycheck)
 
+(defgroup magik-lint nil
+  "Customise Magik lint group."
+  :group 'magik)
+
 (defun magik-lint--latest-version ()
   "Return latest version of the magik linter."
   (ignore-errors
@@ -36,15 +40,20 @@
       (let ((response (json-read)))
         (cdr (assoc 'tag_name response))))))
 
-(defgroup magik-lint nil
-  "Customise Magik lint group."
-  :group 'magik)
-
-(defcustom magik-lint-jar-file-version
-  (or (magik-lint--latest-version) "0.12.0")
-  "Version of magik-lint to use."
+(defcustom magik-lint-jar-file-version "0.12.0"
+  "Version of magik-lint to use.
+Call `magik-lint-update-version' to fetch the latest version from GitHub."
   :group 'magik-lint
   :type 'string)
+
+(defun magik-lint-update-version ()
+  "Update `magik-lint-jar-file-version' to the latest release from GitHub."
+  (interactive)
+  (if-let* ((version (magik-lint--latest-version)))
+      (progn
+        (setq magik-lint-jar-file-version version)
+        (message "magik-lint version updated to %s" version))
+    (message "Could not fetch latest magik-lint version")))
 
 (defcustom magik-lint-jar-file "magik-lint/magik-lint-%s.jar"
   "Location of the magik-lint jar file."
@@ -87,9 +96,10 @@ See URL `https://github.com/StevenLooman/sonar-magik/tree/master/magik-lint'."
            (not (funcall flycheck-executable-find "java")))
   (setq flycheck-magik-lint-java-executable (or (funcall flycheck-executable-find (expand-file-name "bin/java" (getenv "JAVA_HOME"))) "java")))
 
-(if (file-exists-p (magik-lint--jar-file))
-    (add-to-list 'flycheck-checkers 'magik-lint-java 'append)
-  (warn "magik-lint executable not found: %s; please download from https://github.com/StevenLooman/magik-tools/releases/latest" (magik-lint--jar-file)))
+(add-to-list 'flycheck-checkers 'magik-lint-java 'append)
+(unless (file-exists-p (magik-lint--jar-file))
+  (message "magik-lint: jar file not found: %s; download from https://github.com/StevenLooman/magik-tools/releases/latest"
+           (magik-lint--jar-file)))
 
 (provide 'magik-lint)
 ;;; magik-lint.el ends here

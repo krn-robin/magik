@@ -1,4 +1,4 @@
-;;; magik-msg.el --- mode for editing Magik msg and hmsg Message files.
+;;; magik-msg.el --- mode for editing Magik msg and hmsg Message files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 (eval-when-compile
   (require 'easymenu)
   (require 'font-lock)
+  (require 'speedbar)
   (defvar msb-menu-cond)
 
   (require 'magik-utils)
@@ -29,8 +30,7 @@
 
 (defgroup magik-msg nil
   "Customise Magik Messages group."
-  :group 'magik
-  :group 'tools)
+  :group 'magik)
 
 ;; Imenu configuration
 (defvar magik-msg-imenu-generic-expression
@@ -129,7 +129,7 @@ See `imenu-generic-expression'.")
 You can customize msg-mode with the `magik-msg-mode-hook`.
 
 \\{magik-msg-mode-map}"
-  :group 'magik
+  :group 'magik-msg
   :abbrev-table nil
 
   (compat-call setq-local
@@ -170,11 +170,11 @@ the variable `magik-session-buffer'."
      process
      (format
       "_proc(file)
-	 message_handler.compile_message_file(file)
-	 _local message_handler_name << system.split_filename(system.pathname_components(file))
-	 _if message_handler_name _isnt _unset
-	 _then sw:message_handler.new(message_handler_name).load_message_file(file)
-	 _endif
+  message_handler.compile_message_file(file)
+  _local message_handler_name << system.split_filename(system.pathname_components(file))
+  _if message_handler_name _isnt _unset
+  _then sw:message_handler.new(message_handler_name).load_message_file(file)
+  _endif
       _endproc(%S)\n$\n"
       filename))
     gis))
@@ -261,20 +261,17 @@ Called by `magik-session-drag-n-drop-load' when a Msg FILENAME is dropped."
   (magik-msg-msb-configuration))
 
 (defvar magik-msg-f2-map (make-sparse-keymap)
-  "Keymap for the F2 function key in Magik Message buffers.")
+  "Legacy keymap for the F2 function key in Magik Message buffers.
+Kept for backward compatibility; prefer the C-c bindings.")
 
 (progn
   ;; ------------------------ magik msg mode ------------------------
 
-  (fset 'magik-msg-f2-map   magik-msg-f2-map)
-
-  (define-key magik-msg-mode-map [f2]    'magik-msg-f2-map)
-
-  (define-key magik-msg-f2-map    [down] 'magik-msg-forward-message)
-  (define-key magik-msg-f2-map    [up]   'magik-msg-backward-message)
-  (define-key magik-msg-f2-map    "b"    'magik-msg-transmit-buffer)
-  (define-key magik-msg-f2-map    "c"    'magik-msg-compile-module-messages)
-  (define-key magik-msg-f2-map    "m"    'magik-msg-mark-message))
+  (define-key magik-msg-mode-map (kbd "M-n")     'magik-msg-forward-message)
+  (define-key magik-msg-mode-map (kbd "M-p")     'magik-msg-backward-message)
+  (define-key magik-msg-mode-map (kbd "C-c C-b") 'magik-msg-transmit-buffer)
+  (define-key magik-msg-mode-map (kbd "C-c C-c") 'magik-msg-compile-module-messages)
+  (define-key magik-msg-mode-map (kbd "C-c C-m") 'magik-msg-mark-message))
 
 (provide 'magik-msg)
 ;;; magik-msg.el ends here

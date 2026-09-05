@@ -1,4 +1,4 @@
-;;; magik-product.el --- mode for editing Magik product.def files.
+;;; magik-product.el --- mode for editing Magik product.def files.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@
 
 (defgroup magik-product nil
   "Customise Magik product.def files group."
-  :group 'magik
-  :group 'tools)
+  :group 'magik)
 
 ;; Imenu configuration
 (defvar magik-product-imenu-generic-expression
@@ -43,8 +42,8 @@ See `imenu-generic-expression'.")
   "List of Magik product keywords.")
 
 (defgroup magik-product-faces nil
-  "Faces for displaying text in a Magik module.def file."
-  :group 'magik-module)
+  "Faces for displaying text in a Magik product.def file."
+  :group 'magik-product)
 
 (defface magik-product-keyword-face
   '((t :inherit magik-keyword-statements-face))
@@ -104,7 +103,7 @@ Prevents expansion inside indented areas."
 You can customize Product Mode with the `magik-product-mode-hook`.
 
 \\{magik-product-mode-map}"
-  :group 'magik
+  :group 'magik-product
   :abbrev-table nil
   :syntax-table nil
 
@@ -185,21 +184,19 @@ Called by `magik-session-drag-n-drop-load' when a Product FILENAME is dropped."
 ;;; Package registration
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("product.def\\'" . magik-product-mode))
+(add-to-list 'auto-mode-alist '("product\\.def\\'" . magik-product-mode))
 
 (defvar magik-product-f2-map (make-sparse-keymap)
-  "Keymap for the F2 function key in Magik product.def buffers.")
+  "Legacy keymap for the F2 function key in Magik product.def buffers.
+Kept for backward compatibility; prefer the C-c bindings.")
 
 (progn
   ;; ------------------------ magik product mode ------------------------
 
-  (fset 'magik-product-f2-map   magik-product-f2-map)
+  (define-key magik-product-mode-map " "         'magik-product-yas-maybe-expand)
 
-  (define-key magik-product-mode-map [f2]    'magik-product-f2-map)
-  (define-key magik-product-mode-map " "     'magik-product-yas-maybe-expand)
-
-  (define-key magik-product-f2-map    "b"    'magik-product-transmit-buffer)
-  (define-key magik-product-f2-map    "r"    'magik-product-reinitialise))
+  (define-key magik-product-mode-map (kbd "C-c C-b") 'magik-product-transmit-buffer)
+  (define-key magik-product-mode-map (kbd "C-c C-r") 'magik-product-reinitialise))
 
 (provide 'magik-product)
 ;;; magik-product.el ends here

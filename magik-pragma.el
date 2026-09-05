@@ -1,4 +1,4 @@
-;;; magik-pragma.el --- tool for filling in Magik pragma statements.
+;;; magik-pragma.el --- tool for filling in Magik pragma statements.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -89,6 +89,14 @@ Note that this command does handle a multiline _pragma statement."
              (<= pt end-bracket)  ;;and before the final bracket.
              (cons start-bracket end-bracket))))))
 
+(defun magik-pragma--eval-match (match-form)
+  "Evaluate MATCH-FORM, which is either a function or a quoted form.
+If MATCH-FORM is a function, call it with no arguments.
+Otherwise, evaluate it as a legacy quoted s-expression."
+  (if (functionp match-form)
+      (funcall match-form)
+    (eval match-form)))
+
 (defun magik-pragma-do-if-match (list &optional default-elem reverse)
   "Given an LIST of elems execute each match until it returns t.
 The list is in the format (NAME MATCH FUNCTION [OTHER...])
@@ -97,6 +105,9 @@ elem of the matching element and the second arg being the next elem in the list.
 The optional arguments OTHER may be used by FUNCTION to modify its behaviour.
 E.g. pragma-if-match-replace-with-next uses the 4th arg to specify
 the subexpression to replace.
+
+MATCH may be either a function (lambda or symbol) that is called with no
+arguments, or a quoted form that is evaluated for backward compatibility.
 
 Optional arg DEFAULT-ELEM (DEFAULT MATCH FUNCTION [OTHER...])
 is used if no matches are obtained from the list.
@@ -126,17 +137,19 @@ Returns nil if no change or the list (CURRENT-ELEM NEXT-ELEM) elements."
                         current-elem (elt list n)
                         next-elem (if (eq n len) first-elem (elt list (1+ n)))
                         fn (caddr current-elem))
-                  (not (eval (cadr current-elem))))))
+                  (not (magik-pragma--eval-match (cadr current-elem))))))
     (cond ((and (symbolp fn) (fboundp fn))
            (funcall fn current-elem next-elem reverse)
            (list current-elem next-elem))
           (fn
-                                        ;fn is not a function so we evaluate it. The form can
-                                        ;can access current-elem, next-elem and reverse since we are still inside the let. I think...
-           (eval fn)
+           ;; fn is not a named function; if it's callable, call it,
+           ;; otherwise eval it as a legacy form.
+           (if (functionp fn)
+               (funcall fn current-elem next-elem reverse)
+             (eval fn))
            (list current-elem next-elem))
           ((and default-elem
-                (eval (cadr default-elem)))
+                (magik-pragma--eval-match (cadr default-elem)))
            (funcall (caddr default-elem) default-elem first-elem reverse)
            (list default-elem first-elem))
           (t nil))))
@@ -432,9 +445,9 @@ q      - quit
 
 -----------------------------------------------
 ")
-    (mapc 'insert-file-contents magik-pragma-files)
+    (insert-file-contents (magik-pragma--magik-pragma-file))
     (and product-pragma-file
-         (not (member product-pragma-file magik-pragma-files))
+         (not (string-equal (magik-pragma--magik-pragma-file) product-pragma-file))
          (file-exists-p product-pragma-file)
          (insert-file-contents product-pragma-file))
 
@@ -455,7 +468,7 @@ q      - quit
   "Major mode for selecting topics in pragmas.
 
 \\{magik-pragma-topic-select-mode-map}"
-  :group 'magik
+  :group 'magik-pragma
   :abbrev-table nil
   :syntax-table nil)
 
@@ -495,13 +508,20 @@ Beep if not looking at \"[ >] (\""
       (when (looking-at ">\\s-*\\S-+\\s-+\\(\\S-+\\)")
         (setq str (concat str (match-string 1) ", ")))
       (forward-line))
-    (when (not (equal str ""))
+    (unless (equal str "")
       (setq str (substring str 0 (- (length str) 2))))
     (kill-buffer (current-buffer))
     (set-window-configuration magik-pragma-window-configuration)
     (forward-char)
     (delete-region (point) (progn (search-forward "}") (backward-char) (point)))
     (insert str)))
+
+(defun magik-pragma--magik-pragma-file ()
+  "Locate the pragma_topics file."
+  (let* ((pt "data/doc/pragma_topics")
+         (buffer-dir (if buffer-file-name (file-name-directory buffer-file-name) default-directory))
+         (magik-pragma-file (when buffer-dir (expand-file-name pt (locate-dominating-file buffer-dir pt)))))
+    magik-pragma-file))
 
 (defun magik-pragma-topic-edit ()
   "Edit the pragma_topics file."

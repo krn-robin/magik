@@ -83,12 +83,14 @@
     (let ((result (magik-loadlist-buffer-list)))
       (should (equal (caar result) "module_a")))))
 
-(ert-deftest magik-loadlist-buffer-list--trailing-backslash-preserved ()
-  "Trailing backslash is preserved (the eq/substring check is a no-op)."
+(ert-deftest magik-loadlist-buffer-list--trailing-backslash-normalized ()
+  "Trailing backslash is normalized to a forward slash.
+The char comparison in `magik-loadlist-buffer-list' detects a trailing
+backslash and rewrites it as `/'."
   (with-temp-buffer
     (insert "subdir\\\n")
     (let ((result (magik-loadlist-buffer-list)))
-      (should (equal (caar result) "subdir\\")))))
+      (should (equal (caar result) "subdir/")))))
 
 (ert-deftest magik-loadlist-buffer-list--skips-blank-lines ()
   (with-temp-buffer

@@ -28,8 +28,7 @@
 
 (defgroup magik-aliases nil
   "Customise Magik aliases files group."
-  :group 'magik
-  :group 'tools)
+  :group 'magik)
 
 (defcustom magik-aliases-user-file-list '("$HOME/gis_aliases")
   "A list of a User's personal gis_aliases files."
@@ -165,7 +164,7 @@ themselves and move by line as usual.
 You can customise `magik-aliases-mode' with the `magik-aliases-mode-hook'.
 
 \\{magik-aliases-mode-map}"
-  :group 'magik
+  :group 'magik-aliases
   :abbrev-table nil
 
   (compat-call setq-local

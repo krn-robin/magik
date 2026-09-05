@@ -1,4 +1,4 @@
-;;; magik-session-filter.el --- deal with the output from the magik process.
+;;; magik-session-filter.el --- deal with the output from the magik process.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -39,8 +39,7 @@
   (defvar comint-last-input-end) ;;avoid compiler warning
   (require 'comint))
 
-(require 'magik-mode)
-(require 'magik-session)
+(require 'magik-cb)
 
 (defvar magik-session-filter-state "\C-a"
   "Either \\[move-beginning-of-line], \\[move-end-of-line], \\[forward-char] or \" \".")
@@ -49,7 +48,7 @@
   "An alist that matches the different filter actions with the action character.
 The alist is a cons cell of the form (CHARACTER . FUNCTION).
 FUNCTION takes one argument, the string after the action character."
-  :group 'magik
+  :group 'magik-session
   :type '(repeat (cons (character :tag "Filter character")
                        (function :tag "Action function"))))
 
@@ -84,7 +83,7 @@ FUNCTION takes one argument, the string after the action character."
                           magik-session-filter-state "\C-a")
                     (message "Error: %s" (error-message-string err)))))))
             ((equal (magik-session-filter-get-state buf) "\C-a")
-             (with-current-buffer buf (magik-session-filter-insert buf proc n str)))
+             (with-current-buffer buf (magik-session-filter-insert proc n str)))
             (t
              nil))
       ;; else if in " " or "\C-f" state then do nothing.
@@ -98,39 +97,19 @@ FUNCTION takes one argument, the string after the action character."
                               (" " . "\C-a"))))))
         (magik-session-filter proc (substring str (1+ n)))))))
 
-(defun magik-session-filter-insert (buf proc n str)
+(defun magik-session-filter-insert (proc n str)
   "Insert into BUF at the `process-mark' of PROC, N chars from STR.
-If N is nil insert the whole of STR.  We insert before all markers except the
- `comint-last-input-end' and the last command from magik-session-prev-cmds."
+If N is nil insert the whole of STR.  We insert before all markers except
+`comint-last-input-end'."
   (save-excursion
     (goto-char (process-mark proc))
-    ;; we make sure that the end-marker for the last command typed by the user
-    ;; (if there is one, else just the null initial command)
-    ;; is not moved along by the `insert-before-markers' function.
-    ;; Also the marker `comint-last-input-end' mustn't shift.
-    ;;
-    ;; BAD!!!  Evil bug: we mustn't assume that `buf' has a window!
-    ;; BAD!!!            This was only put in so that the initial gis
-    ;; BAD!!!            startup messages would show.  This is now fixed
-    ;; BAD!!!            by simply inserting a welcome string in the buffer.
-    ;; BAD!!! Also, we must make sure that any window start markers remain pinned to the
-    ;; BAD!!! start of the line!
+    ;; Make sure that `comint-last-input-end' is not moved along by the
+    ;; `insert-before-markers' function.
     (let*
-        ((b (car (aref magik-session-prev-cmds (max 0 (- magik-session-no-of-cmds 2)))))
-         (e (cdr (aref magik-session-prev-cmds (max 0 (- magik-session-no-of-cmds 2)))))
-         (b-pos (marker-position b))
-         (e-pos (marker-position e))
-         (comint-last-input-end-pos (marker-position comint-last-input-end))
-         (pt (point))
-         ;; BAD!!! (w (get-buffer-window buf))
-         )
+        ((comint-last-input-end-pos (marker-position comint-last-input-end))
+         (pt (point)))
       (insert-before-markers (if n (substring str 0 n) str))
-      (set-marker b b-pos)  ;shouldn't really be necessary
-      (set-marker e e-pos)
       (set-marker comint-last-input-end comint-last-input-end-pos)
-      ;; BAD!!! (goto-char (window-start w))
-      ;; BAD!!! (beginning-of-line)
-      ;; BAD!!! (set-window-start w (point) t)
       (save-restriction
         (save-match-data
           (narrow-to-region pt (point))
@@ -159,8 +138,8 @@ With a prefix arg, ask user for Magik session buffer to use."
           (set-process-filter process nil)
           (message "Cancelled the filter in '%s'." buffer))
       (with-current-buffer (get-buffer-create (concat " *filter*" buffer))
-        (erase-buffer)
-        (set-buffer buffer)
+        (erase-buffer))
+      (with-current-buffer buffer
         (setq magik-session-filter-state "\C-a")
         (set-process-filter process 'magik-session-filter))
       (message "Set the filter in '%s'." buffer))))
@@ -206,6 +185,8 @@ action's function setting."
 
 ;;; Set up filter action functions for the Magik session process
 
+
+
 (defun magik-session-filter-action-deep-print (proc str)
   "Magik session Filter Action interface for a deep print action.
 According to the STR returned from Magik."
@@ -219,7 +200,7 @@ According to the STR returned from Magik."
       (erase-buffer))
     (insert str)))
 
-(defun magik-session-filter-action-find-file (proc str)
+(defun magik-session-filter-action-find-file (_proc str)
   "(Deprecated) Magik session Filter Action interface for `find-file'.
 Find a file and goto a particular line number
 STR is of the form 42:/bla/bla/foo.magik or
@@ -234,7 +215,7 @@ particular line number."
           (goto-char (point-min))
           (forward-line (string-to-number str))))))
 
-(defun magik-session-filter-action-file-open (proc str)
+(defun magik-session-filter-action-file-open (_proc str)
   "Magik session Filter Action interface for opening files in Emacs.
 STR consists of newline separated KEY=VALUE pairs.
 Recognised KEYs are:
@@ -265,30 +246,29 @@ The behaviour is undefined if any search key and line or column are used."
                             alist))))
 
       ;;Open file
-      (set-buffer (funcall (intern (cdr (assq 'function alist))) (cdr (assq 'file alist))))
+      (with-current-buffer (funcall (intern (cdr (assq 'function alist))) (cdr (assq 'file alist)))
+        ;;act on keys and values.
+        (when (setq val (assq 'method alist))
+          (widen)
+          (goto-char (point-min))
+          (magik-goto-class-method (cdr val) (cdr (assq 'class alist)))
+          (setq start-pt (point)))
+        (when (setq val (assq 'search alist))
+          (widen)
+          (goto-char (or start-pt (point-min))) ;;continue search from class.method?
+          (when (search-forward (cdr val) nil t)
+            (goto-char (match-beginning 0))))
+        (when (setq val (assq 'line alist))
+          (goto-char (point-min))
+          (forward-line (string-to-number (cdr val))))
+        (when (setq val (assq 'column alist))
+          (move-to-column (string-to-number (cdr val))))))))
 
-      ;;act on keys and values.
-      (when (setq val (assq 'method alist))
-        (widen)
-        (goto-char (point-min))
-        (magik-goto-class-method (cdr val) (cdr (assq 'class alist)))
-        (setq start-pt (point)))
-      (when (setq val (assq 'search alist))
-        (widen)
-        (goto-char (or start-pt (point-min))) ;;continue search from class.method?
-        (when (search-forward (cdr val) nil t)
-          (goto-char (match-beginning 0))))
-      (when (setq val (assq 'line alist))
-        (goto-char (point-min))
-        (forward-line (string-to-number (cdr val))))
-      (when (setq val (assq 'column alist))
-        (move-to-column (string-to-number (cdr val)))))))
-
-(defun magik-session-filter-action-cb-mf (proc socketname)
+(defun magik-session-filter-action-cb-mf (_proc socketname)
   "Magik has started a method_finder PROC and tell Emacs what the SOCKETNAME is."
   (setq magik-cb--mf-socket-synchronised socketname))
 
-(defun magik-session-filter-action-cb-goto-method (proc str)
+(defun magik-session-filter-action-cb-goto-method (_proc str)
   "Magik session Filter Action interface for cb-goto-method."
   (magik-cb-goto-method str nil))
 

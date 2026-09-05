@@ -1,4 +1,4 @@
-;;; magik-menu.el --- set the Magik menus.
+;;; magik-menu.el --- set the Magik menus.  -*- lexical-binding: t; -*-
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
     "---"
     [,"Select Environment" magik-version-selection          t]
     [,"Run/Goto session"   magik-session                    t]
-    [,"Start new session"  magik-session-new-buffer :active t :keys "C-u <f2> z"]
+    [,"Start new session"  magik-session-new-buffer :active t :keys "C-u C-c C-z"]
     (,"Magik Session Processes")
     "---"
     (,"Class Browser")
@@ -49,18 +49,14 @@
 (defconst magik-menu-cb-menu
   `(,"Class Browser"
     [,"Run/Goto Class Browser"       magik-cb                      t]
-    [,"Start New Class Browser"      magik-cb-new-buffer   :active t :keys "C-u <f3> <f3>"]
+    [,"Start New Class Browser"      magik-cb-new-buffer   :active t :keys "C-u C-c C-d d"]
     [,"Paste Method in CB"           magik-cb-paste-method         t]
     [,"Paste Class in CB"            magik-cb-paste-class          t]
     [,"Clear Method and Class in CB" magik-cb-and-clear            t]
     "---"
     [,"Jump to Source"               magik-cb-jump-to-source t]
     "---"
-    [,"Customize"                    magik-cb-customize      t]
-    ;; [,"Help"                         magik-cb-help
-    ;;  :active t
-    ;;  :keys "<f3> ?"]
-    ))
+    [,"Customize"                    magik-cb-customize      t]))
 
 ;;;###autoload
 (defun magik-menu-set-menus ()

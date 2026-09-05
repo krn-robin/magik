@@ -127,8 +127,8 @@ Listed by `magik-version' or `magik-version-file'."
   "Current gis_version stream.")
 
 (defvar magik-smallworld-gis-current (when-let* ((smallworld-gis (getenv "SMALLWORLD_GIS")))
-				       (warn "SMALLWORLD_GIS environment variable has been set.  This breaks multi-session support.")
-				       smallworld-gis)
+                                       (warn "SMALLWORLD_GIS environment variable has been set.  This breaks multi-session support.")
+                                       smallworld-gis)
   "Current selected Smallworld GIS directory.")
 
 (defvar magik-version-position nil
@@ -213,7 +213,7 @@ has more than one aliases file available."
   "Major mode for editing gis_version files.
 
 \\{magik-version-mode-map}"
-  :group 'magik
+  :group 'magik-version
   :abbrev-table nil
 
   (compat-call setq-local
@@ -323,7 +323,7 @@ installation directory suitable for selection."
 (defun magik-version-file-open ()
   "Open the magik-version-file to edit."
   (interactive
-   (unless (file-exists-p magik-version-file)
+   (unless (and magik-version-file (file-exists-p magik-version-file))
      (call-interactively 'magik-version-file-create)))
   (find-file magik-version-file))
 
@@ -332,6 +332,8 @@ installation directory suitable for selection."
 Called if no magik-version program exists or `gis-version-file' is nil.
 Will set `gis-version-file' to FILE."
   (interactive)
+  (unless magik-version-file
+    (user-error "magik-version-file is not configured"))
   (find-file magik-version-file)
   (unless (file-exists-p magik-version-file)
     (insert magik-version-file-header)

@@ -279,7 +279,7 @@ the lowest level-operators."
       (setq toks (reverse (magik-tokenise-line))))
 
     ;; special fix for abstract, private, iterator methods etc.
-    (if (member (caar toks) '("_method" "_procs"))
+    (if (member (caar toks) '("_method" "_proc"))
         (let
             ((t2 (car (cl-second toks)))
              (t3 (car (cl-third toks)))
@@ -412,7 +412,7 @@ Add a newline token unless the last token is an operator."
         ;;Otherwise the lisp goes into an infinite loop.
         ;;I have tried setting up magik-state-table
         ;; to have vectors of length 65536 but the memory usage is quite high.
-        (cond ((<= (following-char) 256)
+        (cond ((< (following-char) 256)
                (setq new-state (aref arr (following-char))))
               ((eq state 'neutral)
                (error "Found unquoted multibyte character at position %s"
