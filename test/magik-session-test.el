@@ -7,6 +7,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'test-helper)
 (require 'magik-session)
 
@@ -36,6 +37,37 @@
   (let ((process-environment (cons "TEST_DIR=/opt/magik" process-environment)))
     (should (equal (magik-session-parse-gis-command "$TEST_DIR/gis")
                    '("/opt/magik/gis")))))
+
+;;; magik-session--expand-aliases
+
+(defmacro magik-session-test--with-dot-alias (content &rest body)
+  "Eval BODY with `~/.alias' content faked as CONTENT.
+`shell-file-name' is set to /bin/csh so `magik-session--expand-aliases'
+reads the fake alias file."
+  (declare (indent 1))
+  `(cl-letf (((symbol-function 'file-readable-p) (lambda (_file) t))
+             ((symbol-function 'insert-file-contents)
+              (lambda (_file &rest _args) (insert ,content))))
+     (let ((shell-file-name "/bin/csh"))
+       ,@body)))
+
+(ert-deftest magik-session--expand-aliases--no-alias-adds-default-dir ()
+  "A command with no matching alias is only prefixed with DEFAULT-DIR."
+  (magik-session-test--with-dot-alias ""
+    (should (equal (magik-session--expand-aliases "gis" nil "/opt/magik/" nil)
+                   "[/opt/magik/] gis"))))
+
+(ert-deftest magik-session--expand-aliases--expands-alias-with-args ()
+  "An alias with no `\\!*' placeholder gets the arguments appended."
+  (magik-session-test--with-dot-alias "alias swaf_mega runalias.exe swaf_mega\n"
+    (should (equal (magik-session--expand-aliases "swaf_mega extra_arg" nil "/opt/magik/" nil)
+                   "[/opt/magik/] runalias.exe swaf_mega extra_arg"))))
+
+(ert-deftest magik-session--expand-aliases--literal-args-not-treated-as-backreferences ()
+  "Arguments containing `\\&' or `\\1' are substituted literally."
+  (magik-session-test--with-dot-alias "alias echo_args runalias.exe \\!*\n"
+    (should (equal (magik-session--expand-aliases "echo_args \\&\\1" nil "/opt/magik/" nil)
+                   "[/opt/magik/] runalias.exe \\&\\1"))))
 
 ;;; Overlay-based history folding
 

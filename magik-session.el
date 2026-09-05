@@ -709,13 +709,12 @@ if not already there."
   "Iteratively expand csh-style aliases referenced in COMMAND.
 If PROMPT-P, prompt the user once per expansion step with HISTORY as the
 prior-command list (passed to `read-string').  DEFAULT-DIR is prepended
-to COMMAND when it lacks a `[dir]' prefix.  Strings of the form [rev19] or
-[rev20] are silently removed.  Returns the fully expanded command string."
+to COMMAND when it lacks a `[dir]' prefix.  Returns the fully expanded
+command string."
   (let ((alias-buffer "*temp gis alias buffer*")
         ;; read-string's history arg does not work with buffer-local variables
         (command-history history)
         (keepgoing t)
-        (rev-1920-regexp " +\\[rev\\(19\\|20\\)\\] +")
         (alias-subst-regexp "\\\\!\\(\\\\\\)?\\*")
         alias-beg alias-expansion dir cmd args)
     (unwind-protect
@@ -726,16 +725,12 @@ to COMMAND when it lacks a `[dir]' prefix.  Strings of the form [rev19] or
             (insert-file-contents "~/.alias"))
           (while keepgoing
             (setq keepgoing nil)
-            (setq command (sub command rev-1920-regexp " "))
             (or (eq (string-match "\\[" command) 0)
                 (setq command (concat "[" default-dir "] " command)))
             (when prompt-p
               (setq command (read-string "Magik command: "
                                          (car command-history)
                                          'command-history)))
-            (when (string-match rev-1920-regexp command)
-              (setq keepgoing t
-                    command (sub command rev-1920-regexp " ")))
             (or (eq (string-match "\\[" command) 0)
                 (setq command (concat "[" default-dir "] " command)))
             (string-match "\\[\\([^\]]*\\)\\] *\\([^ ]*\\) *\\(.*\\)" command)
@@ -756,7 +751,7 @@ to COMMAND when it lacks a `[dir]' prefix.  Strings of the form [rev19] or
               (setq alias-expansion (buffer-substring alias-beg (point)))
               (or (string-match alias-subst-regexp alias-expansion)
                   (setq alias-expansion (concat alias-expansion " \\!*")))
-              (setq alias-expansion (sub alias-expansion alias-subst-regexp args)
+              (setq alias-expansion (replace-regexp-in-string alias-subst-regexp args alias-expansion nil t)
                     command (concat "[" dir "] " alias-expansion)))))
       (when (get-buffer "*temp gis alias buffer*")
         (kill-buffer "*temp gis alias buffer*")))
@@ -812,9 +807,7 @@ there is not, prompt for a command to run, and then run it."
                                               'magik-session-buffer-alist-prefix-function
                                               (generate-new-buffer-name magik-session-buffer-default-name)
                                               t)
-                 (generate-new-buffer-name (or magik-session-buffer magik-session-buffer-default-name))))
-        (rev-1920-regexp " +\\[rev\\(19\\|20\\)\\] +")
-        (alias-subst-regexp "\\\\!\\(\\\\\\)?\\*"))
+                 (generate-new-buffer-name (or magik-session-buffer magik-session-buffer-default-name)))))
     (if (and (get-buffer-process buffer)
              (eq (process-status (get-buffer-process buffer)) 'run))
         (progn
